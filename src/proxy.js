@@ -8,8 +8,8 @@ const http = require("http")
 	 ,CacheStream = require("./cacheStream")
 	 ,View = require('./View')
 	 ,zlib = require('zlib')
-	, constants = require('./constants.js')
-	 ,ejs = require("ejs");
+	 ,constructRoute = require('./route')
+	, constants = require('./constants.js');
 
  const cacheLevel = {
 	 no: 0,				// cache no will load data only from endpoint server, but ignore cache
@@ -19,8 +19,8 @@ const http = require("http")
 
  const workingMode = {
 	 proxyCache: 0,			// worked as http proxy, support redirect to endpoint server, cache all kinds of response
-	 serviceProvider: 1,		// worked as data provider service, do not access other endpoint server, ONLY SUPPORT JSON data
-
+	 dataProvider: 1,		// worked as data provider service, do not access other endpoint server, ONLY SUPPORT JSON data
+	 serviceProvider: 2 	// simulate service, it can access remote server , or load data from cache, depends on cache stratigy
  };
 
  Map.prototype.copyFrom = function(...aMap){	  
@@ -47,7 +47,7 @@ const http = require("http")
 		 var __map =  new Map([
 			 ["port", 8079]
 			,["cacheLevel", cacheLevel.normal]
-			,["workingMode", workingMode.serviceProvider]
+			,["workingMode", workingMode.dataProvider]
 			,["endpointServer.address","https://localhost" ]
 		//	,["endpointServer.address","https://www3.lenovo.com"]
 			,["endpointServer.port", 9002 ]
@@ -89,11 +89,9 @@ const http = require("http")
 			 return __defaultConfig;
 		 }
 		 return __defaultConfig;
-
 	 }
 
 	 static get fields(){
-
 		 return Array.from(ServerConfig.getDefault().keys());
 	 }
 
@@ -102,7 +100,6 @@ const http = require("http")
 			 let _o = this.serverMap;
 			 key.split('.').some((key, inx, arr)=>{
 				 if(inx === arr.length-1){
-
 					 if(_o[key] !== val){
 						 this.isChanged = true;
 						 _o[key] = val;
@@ -150,24 +147,6 @@ const http = require("http")
 
 		 return _o;
 
-		 //	 if(key.indexOf(".") >= 0){
-		 //	 if(    let aKeys = key.split(".");
-		 //	 if(    return this[this.__symbolMap.get(aKeys[0])][this.__symbolMap.get(key)];
-		 //	 if(}
-
-		 //	 if(let value = this[this.__symbolMap.get(key)];
-		 //	 if(if(typeof value ==="object"){
-		 //	 if(    let __o = {};
-		 //	 if(    ServerConfig.fields.forEach((_field)=>{
-		 //	 if(   	 if(_field.indexOf(".") >= 0 &&_field.indexOf(key) >= 0 ){
-		 //	 if(   		 let aFields = _field.split(".");
-		 //	 if(   		 __o[aFields[1]] = this[this.__symbolMap.get(aFields[0])][this.__symbolMap.get(_field)];
-
-		 //	 if(   	 }
-		 //	 if(    });
-		 //	 if(    return __o;
-		 //	 if(}
-		 // return value;
 	 }
 	 hasProxy(){
 		 return !!(this.get("proxy")&&this.get("proxy").host&&this.get("proxy").host.length > 0);
@@ -176,31 +155,6 @@ const http = require("http")
 	 isSSL(){
 		 return this.get("endpointServer.address").indexOf("https") >= 0;
 	 }
-
-	 //	 constructor(){
-	 //
-	 //		 let defaultMap = ServerConfig.getDefault();
-	 //		 this.__symbolMap = new Map();
-	 //		 for(let field of ServerConfig.fields){
-	 //			 this.__assign(field,defaultMap.get(field));		
-	 //		 }
-	 //
-	 //	 }
-
-
-	 //	 __assign(field,value){
-	 //
-	 //		 let _s = this.__retrieveSymbol(field);
-	 //		 if(field.indexOf(".")>=0){
-	 //			 let _aFields = field.split(".");
-	 //			 let _subS = this.__retrieveSymbol(_aFields[0]);
-	 //			 this[_subS] = this[_subS] || {};
-	 //			 this[_subS][_s] = value;
-	 //
-	 //		 }else{
-	 //			 this[_s] = value;
-	 //		 }
-	 //	 }
 
 	 __retrieveSymbol(key){
 		 return  this.__symbolMap.get(key) || this.__symbolMap.set(key, Symbol(key)).get(key);
@@ -269,22 +223,18 @@ const http = require("http")
 		 //	 this.serverMap.copyFrom(defaultMap,this.loadConfigFile(),this.__loadEnvironmentConfig());
 	 }
  }
-
  class Cache{
-
 	 constructor(config){
 		 this.cacheLevel = config.get("cacheLevel");
 		 this.cacheFile = path.normalize(config.get("cacheFile"));
 		 try{
 			 this.cache = JSON.parse(fs.readFileSync(this.cacheFile,{encoding: "utf-8"}));
-
 		 }catch(e){
 			 this.cache = {};
 		 }	
 	 }	
 
 	 tryLoadLocalData(req, res){
-
 		 return new Promise((resolve, reject)=>{
 			 if(this.cacheLevel > cacheLevel.no){
 				 let __cacheRes = this.cache[this.generateCacheKey(req)];
@@ -302,7 +252,6 @@ const http = require("http")
 				 reject("no-data");
 			 }
 		 });
-
 	 }
 
 	 generateCacheKey(req){
@@ -322,38 +271,6 @@ const http = require("http")
 			 res.end(res.statusMessage);
 		 });
 		 return;	
-	 }
- }
-
- class Router{
-
-	 constructor(){
-		 this.routeMap = new Map([
-			 [new RegExp(".*"),retrieveBody ]
-			,[new RegExp("_service_persistent"), bind( oCache.handlePersistence, oCache)]
-			,[new RegExp("/__server_config__(.*)"),handleServerConfiguration ]
-			,[new RegExp("/_ui/(.*)"), handleResource]
-			,[new RegExp("/public/"), handleStatic]
-			,[new RegExp(".*"),serverCb]
-		 ]);
-	 }
-	 route(req, res){
-
-		 var iterator = this.routeMap[Symbol.iterator]();
-
-		 function nextCallback(){
-
-			 var item = iterator.next();
-			 if(!item.done){
-				 var handler = item.value;
-				 if(handler[0].test(req.url)){
-					 handler[1](req,res,nextCallback, handler[0]);
-				 }else{
-					 nextCallback();
-				 }
-			 }
-		 }
-		 nextCallback();
 	 }
  }
 
@@ -386,10 +303,10 @@ const http = require("http")
 			 __reqBody += data;
 		 }).on("end",()=>{
 			 req.bodyData = __reqBody;
-			 cb();
+			 cb(req,res);
 		 });
 	 }else{
-		 cb();
+		 cb(req,res);
 	 }
 
  }
@@ -575,9 +492,7 @@ const http = require("http")
 						}));
 					}
 				}
-
 				 batchSyncService(res).map(results=>{
-
 					 results.then((oResult)=>{
 						 aSuccessResults.push(oResult.service);	
 						 waitResult();
@@ -586,7 +501,6 @@ const http = require("http")
 						 waitResult();
 					 });
 				 });
-				 
 				 break;
 		 }
 		
@@ -652,23 +566,20 @@ const http = require("http")
 	 }	
  }
  function retrieveDomainName(url){
-
 	 var aResults = url.match(/^http(?:s)?:\/\/([^\/]+)\/.*$/);
 	 return aResults&&aResults[1];
-
  }
 
  function replaceDomain(url, domain){
 	 return url.replace(/^(http(?:s)?:\/\/)(?:[^\/]+)(\/.*)$/, "$1" + domain + "$2");
  }
 
- function handleResponse(error,hostRes, res,req){
+ function handeRemoteResponse(error,hostRes, res,req){
 
 	 if(error){
 		 errResponse(error, res); 
 		 return ;
 	 }
-
 	 res.statusCode = hostRes.statusCode;
 	 var __ignoreCache = req.headers["__ignore-cache__"];
 
@@ -681,8 +592,7 @@ const http = require("http")
 	 if(__status === 2){
 
 		 if(config.get("cacheLevel") > cacheLevel.no || __ignoreCache ){
-			 if(config.get('workingMode') === 0){
-
+			 if(config.get('workingMode') === workingMode.proxyCache){
 				 hostRes.pipe(new CacheStream({key: oCache.generateCacheKey(req),cache: oCache.cache, header:Object.assign({},hostRes.headers)})).pipe(res);
 			 }else{
 				 let oService = {};
@@ -731,7 +641,6 @@ const http = require("http")
 	 res.statusCode = 503;
 	 res.statusMessage = err.message;
 	 res.end(err.message);
-
  }
 
  function requestEndpointServer(req,res, cb){
@@ -822,14 +731,12 @@ const http = require("http")
 						 }else{
 							cb(e, req, res); 
 						 }
-
-
 					 });
 					 __req.setTimeout(100000, ()=>{
 
 						 if(config.get("cacheLevel") > cacheLevel.no &&!__ignoreCache){
 							 oDataProxy.tryLoadLocalData(req, res).then(data=>{
-								 console.log("got cache");
+								 console.log("got from cache");
 							 }).catch(err=>{				 
 								cb({message:"request has timeout : 10000"}, req,res);
 							 });
@@ -837,7 +744,6 @@ const http = require("http")
 							cb({message:"request has timeout : 10000"}, req,res);
 						 }
 					 });	
-					 
 					 req.bodyData&&__req.write(req.bodyData);			// post request body
 					 __req.end();
 
@@ -853,28 +759,34 @@ const http = require("http")
 	 var _reqeustHeader = req.headers;
 	 var __ignoreCache = _reqeustHeader["__ignore-cache__"];
 
-	 if(config.get("cacheLevel") == cacheLevel.cacheOnly && !__ignoreCache){     // cache only
-
+	 if(config.get("workingMode") == workingMode.dataProvider && !__ignoreCache){     // cache only
 		 oDataProxy.tryLoadLocalData(req, res).then(data=>{
 			 console.log("find cache");
 		 }).catch(err=>{
 			 res.statusCode = 404;
 			 res.end(`can not find cache for ${req.url}`);
 		 });
-
 	 }else{
-		requestEndpointServer(req, res,handleResponse);
-		
+		requestEndpointServer(req, res,handeRemoteResponse);
 	 }
  }
- var config = new ServerConfig();
- var serviceConfig = new ServiceConfig();
- var oCache = new Cache(config);
- var oRouter = new Router();	
- var oView = new View();
- var oDataProxy = config.get('workingMode') == 1? serviceConfig : oCache;
+var config = new ServerConfig();
+var serviceConfig = new ServiceConfig();
+var oCache = new Cache(config);
 
- var requestViaProxy = ((fn,proxyOp)=>{
+var oView = new View();
+var oDataProxy = config.get('workingMode') == workingMode.serviceProvider? serviceConfig : oCache;
+const aRoutes = [
+	{target: new RegExp(".*"), cb: retrieveBody},
+	{target: new RegExp("_service_persistent"), cb: bind( oCache.handlePersistence, oCache)},
+	{target: new RegExp("/__server_config__(.*)"), cb: handleServerConfiguration},
+	{target: new RegExp("/_ui/(.*)"), cb: handleResource},
+	{target: new RegExp("/public/"), cb:handleStatic },
+	{target: new RegExp(".*"), cb: serverCb},
+]; 
+const route = constructRoute(aRoutes);
+  
+const requestViaProxy = ((fn,proxyOp)=>{
 	 return function(){
 		 fn.apply(null, [proxyOp].concat([].slice.call(arguments)));
 	 };
@@ -906,10 +818,8 @@ const http = require("http")
 		 }).on("error",(err)=>{
 			 reportError(err, cb);		
 		 })
-
 		 target.bodyData&&proxyReq.write(target.bodyData);
 		 proxyReq.end();
-
 	 }).on("error",(err)=>{
 		 reportError(err, cb);			
 	 }).end();
@@ -919,15 +829,12 @@ const http = require("http")
 		 console.error(err);
 		 cb.call(null, err);	
 	 }
-
  }, config.get("proxy")|| {});
 
-
- var server = !config.isSSL() ? http.createServer(bind(oRouter.route,oRouter)) : https.createServer({
+ var server = !config.isSSL() ? http.createServer(route) : https.createServer({
 	 key: fs.readFileSync(path.normalize(config.get("SSLKey"))),
 	 cert: fs.readFileSync(path.normalize(config.get("SSLCert")))
- }, bind(oRouter.route,oRouter));
+ }, route);
 
- server.listen(config.get("port"));
-
- console.log(`Server is running at 127.0.0.1 , port ${config.get("port")}`);
+server.listen(config.get("port"));
+console.log(`Server is running at 127.0.0.1 , port ${config.get("port")}`);
