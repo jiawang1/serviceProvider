@@ -10,6 +10,7 @@ const http = require("http")
 	, zlib = require('zlib')
 	, utils = require('./utils')
 	 ,constructRoute = require('./route')
+	 ,requestRemote = require('./requestRemote')
 	, constants = require('./constants.js');
 
 const cacheLevel = {
@@ -21,7 +22,7 @@ const cacheLevel = {
 
 /**
  * cacheFirst:  1 load cache -> 2 load remote -> 3 save cache -> 4 return.  working like data provider
- * remoteFirst: 1 load remote  -> yes , save cache, return , no -> 2 load from cache.  working with stable remote server 
+ * remoteFirst: 1 load remote  -> yes , return , no -> 2 load from cache.  working with stable remote server 
  * remoteSync: 1 load remote -> yes , save cache, return , no -> return.  sync data 
 */
 const cacheStrategy = {
@@ -144,7 +145,8 @@ class ServerConfig {
 	get(key) {
 
 		if (key === "endpointServer.host") {
-			return this.get("endpointServer.address").match(/^http(?:s)?:\/\/([^\/]+)/)[1];
+			let matched = this.get("endpointServer.address").match(/^http(?:s)?:\/\/([^\/]+)/);
+			return matched?matched[1]:'';
 		}
 		var _o = this.serverMap;
 		key.split('.').forEach(key => {
@@ -559,81 +561,81 @@ function errResponse(err, res) {
 	res.end(err.message);
 }
 
-function requestRemoteServer(req, res) {
+// function requestRemoteServer(req, res) {
 
-	var endServerHost = config.get("endpointServer.host"),
-		__ignoreCache = req.headers["__ignore-cache__"],
-		endServerPort = config.get("endpointServer.port"),
-		oAuth;
-	if (config.get("endpointServer.user")) {
-		oAuth = 'Basic ' + new Buffer(config.get("endpointServer.user") + ':' + config.get("endpointServer.password")).toString('base64');
-	}
-	/* 
-	* https via proxy, request via tunnel.
-	* this kind of request have to create socket to proxy first, the use this as
-	* tunnel to connect to end point server
-	*/
-	if (config.isSSL() && config.hasProxy()) {
-		return requestViaProxy({
-			path: req.url,
-			host: endServerHost,
-			prot: endServerPort,
-			method: req.method,
-			auth: oAuth,
-			bodyData: req.bodyData
-		});
+// 	var endServerHost = config.get("endpointServer.host"),
+// 		__ignoreCache = req.headers["__ignore-cache__"],
+// 		endServerPort = config.get("endpointServer.port"),
+// 		oAuth;
+// 	if (config.get("endpointServer.user")) {
+// 		oAuth = 'Basic ' + new Buffer(config.get("endpointServer.user") + ':' + config.get("endpointServer.password")).toString('base64');
+// 	}
+// 	/* 
+// 	* https via proxy, request via tunnel.
+// 	* this kind of request have to create socket to proxy first, the use this as
+// 	* tunnel to connect to end point server
+// 	*/
+// 	if (config.isSSL() && config.hasProxy()) {
+// 		return requestViaProxy({
+// 			path: req.url,
+// 			host: endServerHost,
+// 			prot: endServerPort,
+// 			method: req.method,
+// 			auth: oAuth,
+// 			bodyData: req.bodyData
+// 		});
 
-	} else {
-		var __option = {};
-		__option.method = req.method;
-		__option.headers = Object.assign(__option.headers || {}, req.headers);
-		__option.headers.host = endServerHost;
-		oAuth && (__option.headers.Authorization = oAuth);
-		if (config.hasProxy()) {
+// 	} else {
+// 		var __option = {};
+// 		__option.method = req.method;
+// 		__option.headers = Object.assign(__option.headers || {}, req.headers);
+// 		__option.headers.host = endServerHost;
+// 		oAuth && (__option.headers.Authorization = oAuth);
+// 		if (config.hasProxy()) {
 
-			let oProxy = config.get("proxy");
-			__option.hostname = oProxy.host;
-			__option.port = oProxy.port;
-			__option.path = config.get("endpointServer.address") + req.url;
+// 			let oProxy = config.get("proxy");
+// 			__option.hostname = oProxy.host;
+// 			__option.port = oProxy.port;
+// 			__option.path = config.get("endpointServer.address") + req.url;
 
-		} else {
-			__option.hostname = __option.headers.host;
-			(endServerPort) && (__option.port = endServerPort);
-			__option.path = req.url;
-		}
+// 		} else {
+// 			__option.hostname = __option.headers.host;
+// 			(endServerPort) && (__option.port = endServerPort);
+// 			__option.path = req.url;
+// 		}
 
-		if (config.isSSL()) {
-			// by this way, to get rid of untruseted https site
-			__option.strictSSL = false;
-			__option.agent = new https.Agent({
-				host: endServerHost
-				, port: endServerPort
-				, path: req.url
-				, rejectUnauthorized: false
-			});
-		}
-		return new Promise((resolve, reject) => {
-			var __req = (config.isSSL() ? https : http).request(__option, (hostRes) => {
-				//cb(null,hostRes, res,req);
-				if (Math.floor(hostRes.statusCode / 100) >= 4) {
-					let err = new Error(`request failed with status code ${hostRes.statusCode}`);
-					err.statusCode = hostRes.statusCode;
-					reject(err);
-				} else {
-					resolve(hostRes);
-				}
-			});
-			__req.on("error", (e) => {
-				reject(e);
-			});
-			__req.setTimeout(100000, () => {
-				reject(new Error("request has timeout : 10000"));
-			});
-			req.bodyData && __req.write(req.bodyData);			// post request body
-			__req.end();
-		});
-	}
-}
+// 		if (config.isSSL()) {
+// 			// by this way, to get rid of untruseted https site
+// 			__option.strictSSL = false;
+// 			__option.agent = new https.Agent({
+// 				host: endServerHost
+// 				, port: endServerPort
+// 				, path: req.url
+// 				, rejectUnauthorized: false
+// 			});
+// 		}
+// 		return new Promise((resolve, reject) => {
+// 			var __req = (config.isSSL() ? https : http).request(__option, (hostRes) => {
+// 				//cb(null,hostRes, res,req);
+// 				if (Math.floor(hostRes.statusCode / 100) >= 4) {
+// 					let err = new Error(`request failed with status code ${hostRes.statusCode}`);
+// 					err.statusCode = hostRes.statusCode;
+// 					reject(err);
+// 				} else {
+// 					resolve(hostRes);
+// 				}
+// 			});
+// 			__req.on("error", (e) => {
+// 				reject(e);
+// 			});
+// 			__req.setTimeout(100000, () => {
+// 				reject(new Error("request has timeout : 10000"));
+// 			});
+// 			req.bodyData && __req.write(req.bodyData);			// post request body
+// 			__req.end();
+// 		});
+// 	}
+// }
 
 function generateCacheStream(req, hostRes) {
 
@@ -648,7 +650,7 @@ function generateCacheStream(req, hostRes) {
 	} else {
 		oService.url = req.url;
 	}
-	Service.path = serviceConfig.generatePath({ method: oService.method, path: req.url.replace(/^(.*)\?.*/, "$1").replace(/\//g, "_") });
+	oService.path = serviceConfig.generatePath({ method: oService.method, path: req.url.replace(/^(.*)\?.*/, "$1").replace(/\//g, "_") });
 	return new CacheStream({ oService: oService, serviceConfig: serviceConfig });
 }
 
@@ -697,7 +699,7 @@ function serverCb(req, res) {
 		});
 	} else if (config.get("workingMode") == workingMode.serviceProvider) {
 
-		if (config.get("cacheStrategy") === cacheStrategy.cacheFirst) {
+		if (config.get("cacheStrategy") == cacheStrategy.cacheFirst) {
 			serviceConfig.tryLoadLocalData(req, res).then(data => {
 				console.log(`find in cache ${req.url}`);
 			}).catch(err => {
@@ -709,7 +711,7 @@ function serverCb(req, res) {
 				});
 			});
 
-		} else if(config.get("cacheStrategy") === cacheStrategy.remoteFirst) {
+		} else if(config.get("cacheStrategy") == cacheStrategy.remoteFirst) {
 			requestRemoteServer(req, res).then((hostRes) => {
 				handleRemoteRes(hostRes, req, res);
 			}).catch((err) => {
@@ -720,14 +722,14 @@ function serverCb(req, res) {
 					errResponse(err, res);
 				});
 			});
-		}else{
+		}else{    // for sync case
 			requestRemoteServer(req, res).then((hostRes)=>{
 				handleRemoteRes(hostRes, req, res, generateCacheStream);
 			}).catch(err=>{
 				errResponse(err, res);
 			});
 		}
-	} else {
+	} else {     // for proxy case
 		//TODO proxy
 	}
 }
@@ -746,50 +748,51 @@ const aRoutes = [
 	{ target: new RegExp(".*"), cb: serverCb },
 ];
 const route = constructRoute(aRoutes);
+var requestRemoteServer= requestRemote(config); 
 
-const requestViaProxy = ((fn, proxyOp) => {
-	return function () {
-		return utils.wrapToPromise(fn, null)(...[proxyOp].concat([].slice.call(arguments)));
-	};
-})((proxyOp, target, cb) => {
+// const requestViaProxy = ((fn, proxyOp) => {
+// 	return function () {
+// 		return utils.wrapToPromise(fn, null)(...[proxyOp].concat([].slice.call(arguments)));
+// 	};
+// })((proxyOp, target, cb) => {
 
-	var targetPort = ":" + (target.port || 443);
-	http.request({
-		hostname: proxyOp.host
-		, port: proxyOp.port
-		, method: "CONNECT"
-		, agent: false
-		, path: target.host + targetPort  //"www3.lenovo.com:443"
-		, headers: {
-			host: target.host + targetPort  //"www3.lenovo.com:443"
-		}
-	}).on("connect", (proxyRes, socket, head) => {
+// 	var targetPort = ":" + (target.port || 443);
+// 	http.request({
+// 		hostname: proxyOp.host
+// 		, port: proxyOp.port
+// 		, method: "CONNECT"
+// 		, agent: false
+// 		, path: target.host + targetPort  //"www3.lenovo.com:443"
+// 		, headers: {
+// 			host: target.host + targetPort  //"www3.lenovo.com:443"
+// 		}
+// 	}).on("connect", (proxyRes, socket, head) => {
 
-		let ops = {
-			socket: socket,
-			agent: false,
-			hostname: target.host,
-			path: target.path,
-			method: target.method
-		};
-		target.auth && (ops.headers = { Authorization: target.auth });
-		let proxyReq = https.request(ops, (res) => {
-			cb.call(null, null, res);
-		}).on("error", (err) => {
-			reportError(err, cb);
-		})
-		target.bodyData && proxyReq.write(target.bodyData);
-		proxyReq.end();
-	}).on("error", (err) => {
-		reportError(err, cb);
-	}).end();
+// 		let ops = {
+// 			socket: socket,
+// 			agent: false,
+// 			hostname: target.host,
+// 			path: target.path,
+// 			method: target.method
+// 		};
+// 		target.auth && (ops.headers = { Authorization: target.auth });
+// 		let proxyReq = https.request(ops, (res) => {
+// 			cb.call(null, null, res);
+// 		}).on("error", (err) => {
+// 			reportError(err, cb);
+// 		})
+// 		target.bodyData && proxyReq.write(target.bodyData);
+// 		proxyReq.end();
+// 	}).on("error", (err) => {
+// 		reportError(err, cb);
+// 	}).end();
 
-	function reportError(err, cb) {
-		console.error("error when connect to endpoint site via proxy");
-		console.error(err);
-		cb.call(null, err);
-	}
-}, config.get("proxy") || {});
+// 	function reportError(err, cb) {
+// 		console.error("error when connect to endpoint site via proxy");
+// 		console.error(err);
+// 		cb.call(null, err);
+// 	}
+// }, config.get("proxy") || {});
 
 var server = !config.isSSL() ? http.createServer(route) : https.createServer({
 	key: fs.readFileSync(path.normalize(config.get("SSLKey"))),
