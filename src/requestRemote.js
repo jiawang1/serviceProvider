@@ -101,14 +101,14 @@ const requestRemoteServer = (config)=>(req, res) =>{
 		}
 		return new Promise((resolve, reject) => {
 			var __req = (config.isSSL() ? https : http).request(__option, (hostRes) => {
-				//cb(null,hostRes, res,req);
-				if (Math.floor(hostRes.statusCode / 100) >= 4) {
-					let err = new Error(`request failed with status code ${hostRes.statusCode}`);
-					err.statusCode = hostRes.statusCode;
-					reject(err);
-				} else {
-					resolve(hostRes);
-				}
+				// if (Math.floor(hostRes.statusCode / 100) >= 4) {
+				// 	let err = new Error(`request failed with status code ${hostRes.statusCode}`);
+				// 	err.statusCode = hostRes.statusCode;
+				// 	reject(err);
+				// } else {
+				// 	resolve(hostRes);
+				// }
+				resolve(hostRes);
 			});
 			__req.on("error", (e) => {
 				reject(e);

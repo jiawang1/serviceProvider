@@ -17,7 +17,6 @@ const cacheLevel = {
 	no: 0,				// cache no will load data only from endpoint server, but ignore cache
 	normal: 1,			// cache normal will load data from endpoint server first, if no, then try to load data from cache, and persistent server data to cache
 	cacheOnly: 2			// cache only will load data from cache, but ignore enpoint server
-
 };
 
 /**
@@ -28,13 +27,12 @@ const cacheLevel = {
 const cacheStrategy = {
 	cacheFirst: 0,
 	remoteFirst: 1,
-	remoteSync: 2
 };
 
 const workingMode = {
 	proxyCache: 0,			// worked as http proxy, support redirect to endpoint server, cache all kinds of response
 	dataProvider: 1,		// worked as data provider service, do not access other endpoint server, ONLY SUPPORT JSON data
-	serviceProvider: 2 	// simulate service, it can access remote server , or load data from cache, depends on cache stratigy
+	serviceProvider: 2 	    // simulate service, it can access remote server , or load data from cache, depends on cache stratigy
 };
 
 Map.prototype.copyFrom = function (...aMap) {
@@ -60,8 +58,9 @@ class ServerConfig {
 		var __map = new Map([
 			["port", 8079]
 			, ["cacheLevel", cacheLevel.normal]
-			,["cacheStrategy",cacheStrategy.remoteFirst]
+			, ["cacheStrategy",cacheStrategy.remoteFirst]
 			, ["workingMode", workingMode.dataProvider]
+			, ["sync", true]    // if sync = true , it will update cache automatically after response back from remote server
 			, ["endpointServer.address", "https://localhost"]
 			//	,["endpointServer.address","https://www3.lenovo.com"]
 			, ["endpointServer.port", 9002]
@@ -90,11 +89,9 @@ class ServerConfig {
 				}
 			});
 		}
-
 		__defaultConfig.keys = function () {
 			return __map.keys();
 		}
-
 		ServerConfig.getDefault = function () {
 			return __defaultConfig;
 		}
@@ -104,7 +101,6 @@ class ServerConfig {
 	static get fields() {
 		return Array.from(ServerConfig.getDefault().keys());
 	}
-
 	set(key, val) {
 		if (ServerConfig.fields.indexOf(key) >= 0) {
 			let _o = this.serverMap;
@@ -122,15 +118,12 @@ class ServerConfig {
 		}
 		return this;
 	}
-
 	save() {
 		return new Promise((resolve, reject) => {
 			if (this.isChanged) {
 				fs.writeFile(constants.SERVER_CONFIG, JSON.stringify(this.serverMap), (err) => {
-
 					if (err) {
 						reject(err);
-
 					} else {
 						resolve('success');
 						this.isChanged = false;
@@ -141,9 +134,7 @@ class ServerConfig {
 			}
 		});
 	}
-
 	get(key) {
-
 		if (key === "endpointServer.host") {
 			let matched = this.get("endpointServer.address").match(/^http(?:s)?:\/\/([^\/]+)/);
 			return matched?matched[1]:'';
@@ -153,7 +144,6 @@ class ServerConfig {
 			_o = _o[key];
 		});
 		return _o;
-
 	}
 	hasProxy() {
 		return !!(this.get("proxy") && this.get("proxy").host && this.get("proxy").host.length > 0);
@@ -177,7 +167,6 @@ class ServerConfig {
 			if (process.env["npm_package_config_" + key]) {
 				//	 envmap.set(key, process.env["npm_package_config_" + key]);
 				assignValue(key, process.env["npm_package_config_" + key], envmap)
-
 			}
 		});
 
@@ -188,28 +177,20 @@ class ServerConfig {
 				//envmap.set(matches[1].toLowerCase(), item);
 				//envmap[matches[1].toLowerCase()] = item;
 				assignValue(matches[1].toLowerCase(), item, envmap);
-
 			}
 			return item;
 		});
 		return envmap;
 	}
-
-
 	calConfig() {
-
 		return this;
 	}
-
 	loadConfigFile() {
 		try {
 			fs.statSync(constants.SERVER_CONFIG);
 			var __config = fs.readFileSync(constants.SERVER_CONFIG, 'utf-8');
 			return __config.length > 0 ? JSON.parse(__config) : {};
-			//  return Map.fromJson(__config);
-
 		} catch (e) {
-
 			try {
 				var stat = fs.statSync('./_config');
 
@@ -218,10 +199,8 @@ class ServerConfig {
 			}
 			fs.writeFile(constants.SERVER_CONFIG, '');
 			return {};
-
 		}
 	}
-
 	constructor() {
 		this.isChanged = false;
 		let defaultMap = ServerConfig.getDefault();
@@ -240,7 +219,6 @@ class Cache {
 			this.cache = {};
 		}
 	}
-
 	tryLoadLocalData(req, res) {
 		return new Promise((resolve, reject) => {
 			if (this.cacheLevel > cacheLevel.no) {
@@ -263,7 +241,6 @@ class Cache {
 	generateCacheKey(req) {
 		return req.method + req.url;
 	}
-
 	handlePersistence(req, res) {
 		fs.writeFile(this.cacheFile, JSON.stringify(this.cache), (err) => {
 			if (err) {
@@ -281,15 +258,12 @@ class Cache {
 }
 
 function handleStatic(req, res, cb, urlPart) {
-
 	let url = req.url;
 	let _path = path.join("..", url);
 	sendFile(_path, res);
-
 }
 
 function assignValue(key, val, oo) {
-
 	key.split('.').forEach((key, inx, arr) => {
 		if (inx === arr.length - 1) {
 			oo[key] = val;
@@ -299,7 +273,6 @@ function assignValue(key, val, oo) {
 			}
 		}
 	});
-
 }
 function retrieveBody(req, res, cb) {
 
@@ -399,9 +372,7 @@ function handleServerConfiguration(req, res, cb, urlPart) {
 				extractParam(req.bodyData).map(pair => {
 					config.set(pair.key, pair.val);
 				});
-
 				config.save().then(() => {
-
 					res.writeHead(200, {
 						"Content-Type": constants.MIME.json
 					});
@@ -472,9 +443,7 @@ function handleServerConfiguration(req, res, cb, urlPart) {
 
 				});
 				break;
-
 			case '/sync_all':
-
 				var count = serviceConfig.getServiceList().length,
 					aSuccessResults = [],
 					aFailedResults = [];
@@ -561,81 +530,6 @@ function errResponse(err, res) {
 	res.end(err.message);
 }
 
-// function requestRemoteServer(req, res) {
-
-// 	var endServerHost = config.get("endpointServer.host"),
-// 		__ignoreCache = req.headers["__ignore-cache__"],
-// 		endServerPort = config.get("endpointServer.port"),
-// 		oAuth;
-// 	if (config.get("endpointServer.user")) {
-// 		oAuth = 'Basic ' + new Buffer(config.get("endpointServer.user") + ':' + config.get("endpointServer.password")).toString('base64');
-// 	}
-// 	/* 
-// 	* https via proxy, request via tunnel.
-// 	* this kind of request have to create socket to proxy first, the use this as
-// 	* tunnel to connect to end point server
-// 	*/
-// 	if (config.isSSL() && config.hasProxy()) {
-// 		return requestViaProxy({
-// 			path: req.url,
-// 			host: endServerHost,
-// 			prot: endServerPort,
-// 			method: req.method,
-// 			auth: oAuth,
-// 			bodyData: req.bodyData
-// 		});
-
-// 	} else {
-// 		var __option = {};
-// 		__option.method = req.method;
-// 		__option.headers = Object.assign(__option.headers || {}, req.headers);
-// 		__option.headers.host = endServerHost;
-// 		oAuth && (__option.headers.Authorization = oAuth);
-// 		if (config.hasProxy()) {
-
-// 			let oProxy = config.get("proxy");
-// 			__option.hostname = oProxy.host;
-// 			__option.port = oProxy.port;
-// 			__option.path = config.get("endpointServer.address") + req.url;
-
-// 		} else {
-// 			__option.hostname = __option.headers.host;
-// 			(endServerPort) && (__option.port = endServerPort);
-// 			__option.path = req.url;
-// 		}
-
-// 		if (config.isSSL()) {
-// 			// by this way, to get rid of untruseted https site
-// 			__option.strictSSL = false;
-// 			__option.agent = new https.Agent({
-// 				host: endServerHost
-// 				, port: endServerPort
-// 				, path: req.url
-// 				, rejectUnauthorized: false
-// 			});
-// 		}
-// 		return new Promise((resolve, reject) => {
-// 			var __req = (config.isSSL() ? https : http).request(__option, (hostRes) => {
-// 				//cb(null,hostRes, res,req);
-// 				if (Math.floor(hostRes.statusCode / 100) >= 4) {
-// 					let err = new Error(`request failed with status code ${hostRes.statusCode}`);
-// 					err.statusCode = hostRes.statusCode;
-// 					reject(err);
-// 				} else {
-// 					resolve(hostRes);
-// 				}
-// 			});
-// 			__req.on("error", (e) => {
-// 				reject(e);
-// 			});
-// 			__req.setTimeout(100000, () => {
-// 				reject(new Error("request has timeout : 10000"));
-// 			});
-// 			req.bodyData && __req.write(req.bodyData);			// post request body
-// 			__req.end();
-// 		});
-// 	}
-// }
 
 function generateCacheStream(req, hostRes) {
 
@@ -656,28 +550,31 @@ function generateCacheStream(req, hostRes) {
 
 
 function handleRemoteRes(hostRes, req, res, cacheHandler) {
-
 	res.statusCode = hostRes.statusCode;
 	var __ignoreCache = req.headers["__ignore-cache__"];
-
 	Object.keys(hostRes.headers).forEach((item) => {
 		res.setHeader(item, hostRes.headers[item]);
 	});
-	var __status = Math.floor(hostRes.statusCode / 100);
-
-	if (__status === 2) {
+	if (hostRes.statusCode >= 200 && hostRes.statusCode < 300) {
 		if (cacheHandler) {
 			hostRes.pipe(cacheHandler(req, hostRes)).pipe(res);
 		} else {
 			hostRes.pipe(res);
 		}
-	} else if (__status === 3) {
-		console.log(`status is ${__status}`);
+		return Promise.resolve();
+	} else if (hostRes.statusCode >= 300 && hostRes.statusCode < 400) {
+		console.log(`status is ${hostRes.statusCode}`);
 		var redirect = res.getHeader("location");
 		if (redirect && retrieveDomainName(redirect) && (retrieveDomainName(redirect) === config.get("endpointServer.host"))) {
 			res.setHeader("location", replaceDomain(redirect, req.headers.host));
 		}
 		hostRes.pipe(res);
+		return Promise.resolve();
+	}else if (hostRes.statusCode == 401 || hostRes.statusCode == 403){
+		hostRes.pipe(res);
+		return Promise.resolve();
+	}else if (hostRes.statusCode >= 400){
+		return Promise.reject(hostRes);
 	}
 }
 
@@ -690,47 +587,45 @@ function serverCb(req, res) {
 	var _reqeustHeader = req.headers;
 	var __ignoreCache = _reqeustHeader["__ignore-cache__"];
 
-	if (config.get("workingMode") == workingMode.dataProvider && !__ignoreCache) {     // cache only
-		serviceConfig.tryLoadLocalData(req, res).then(data => {
+	const _handleResponse = (hostRes, req, res)=>{
+		return config.get("sync")?handleRemoteRes(hostRes, req, res, generateCacheStream):handleRemoteRes(hostRes, req, res);
+	};
+
+	if (config.get("workingMode") == workingMode.dataProvider) {     // cache only
+		getDataProxy().tryLoadLocalData(req, res).then(data => {
 			console.log("find cache");
 		}).catch(err => {
 			res.statusCode = 404;
 			res.end(`can not find cache for ${req.url}`);
 		});
 	} else if (config.get("workingMode") == workingMode.serviceProvider) {
-
 		if (config.get("cacheStrategy") == cacheStrategy.cacheFirst) {
-			serviceConfig.tryLoadLocalData(req, res).then(data => {
+			getDataProxy().tryLoadLocalData(req, res).then(data => {
 				console.log(`find in cache ${req.url}`);
 			}).catch(err => {
 				console.log(err.stack || err);
 				requestRemoteServer(req, res).then((hostRes) => {
-					handleRemoteRes(hostRes, req, res, generateCacheStream);
+					_handleResponse(hostRes, req, res);
 				}).catch(err => {
 					errResponse(err, res);
 				});
 			});
-
-		} else if(config.get("cacheStrategy") == cacheStrategy.remoteFirst) {
+		} else if(config.get("cacheStrategy") == cacheStrategy.remoteFirst){
 			requestRemoteServer(req, res).then((hostRes) => {
-				handleRemoteRes(hostRes, req, res);
+				_handleResponse(hostRes, req, res);
 			}).catch((err) => {
-				serviceConfig.tryLoadLocalData(req, res).then(data => {
+				getDataProxy().tryLoadLocalData(req, res).then(data => {
 					console.log(`find in cache ${req.url}`);
 				}).catch(()=>{
-					console.log(`failed to find in cache ${req.url}`);
+					console.error(`failed to find in cache ${req.url}`);
 					errResponse(err, res);
 				});
-			});
-		}else{    // for sync case
-			requestRemoteServer(req, res).then((hostRes)=>{
-				handleRemoteRes(hostRes, req, res, generateCacheStream);
-			}).catch(err=>{
-				errResponse(err, res);
 			});
 		}
 	} else {     // for proxy case
 		//TODO proxy
+		
+
 	}
 }
 var config = new ServerConfig();
@@ -738,7 +633,7 @@ var serviceConfig = new ServiceConfig();
 var oCache = new Cache(config);
 
 var oView = new View();
-var oDataProxy = config.get('workingMode') == workingMode.serviceProvider ? serviceConfig : oCache;
+const getDataProxy = ()=>{return config.get('workingMode') == workingMode.proxyCache ? oCache: serviceConfig;};
 const aRoutes = [
 	{ target: new RegExp(".*"), cb: retrieveBody },
 	{ target: new RegExp("_service_persistent"), cb: bind(oCache.handlePersistence, oCache) },
@@ -749,50 +644,6 @@ const aRoutes = [
 ];
 const route = constructRoute(aRoutes);
 var requestRemoteServer= requestRemote(config); 
-
-// const requestViaProxy = ((fn, proxyOp) => {
-// 	return function () {
-// 		return utils.wrapToPromise(fn, null)(...[proxyOp].concat([].slice.call(arguments)));
-// 	};
-// })((proxyOp, target, cb) => {
-
-// 	var targetPort = ":" + (target.port || 443);
-// 	http.request({
-// 		hostname: proxyOp.host
-// 		, port: proxyOp.port
-// 		, method: "CONNECT"
-// 		, agent: false
-// 		, path: target.host + targetPort  //"www3.lenovo.com:443"
-// 		, headers: {
-// 			host: target.host + targetPort  //"www3.lenovo.com:443"
-// 		}
-// 	}).on("connect", (proxyRes, socket, head) => {
-
-// 		let ops = {
-// 			socket: socket,
-// 			agent: false,
-// 			hostname: target.host,
-// 			path: target.path,
-// 			method: target.method
-// 		};
-// 		target.auth && (ops.headers = { Authorization: target.auth });
-// 		let proxyReq = https.request(ops, (res) => {
-// 			cb.call(null, null, res);
-// 		}).on("error", (err) => {
-// 			reportError(err, cb);
-// 		})
-// 		target.bodyData && proxyReq.write(target.bodyData);
-// 		proxyReq.end();
-// 	}).on("error", (err) => {
-// 		reportError(err, cb);
-// 	}).end();
-
-// 	function reportError(err, cb) {
-// 		console.error("error when connect to endpoint site via proxy");
-// 		console.error(err);
-// 		cb.call(null, err);
-// 	}
-// }, config.get("proxy") || {});
 
 var server = !config.isSSL() ? http.createServer(route) : https.createServer({
 	key: fs.readFileSync(path.normalize(config.get("SSLKey"))),
