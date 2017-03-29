@@ -1,6 +1,6 @@
 const http = require("http")
 	, https = require("https");
-const utils = require("./utils");
+const utils = require("../utils/utils");
 
 
 const requestViaProxy = ((fn)=> ()=>{

@@ -2,16 +2,16 @@
 
 const http = require("http")
 	, https = require("https")
-	, ServiceConfig = require('./ServiceConfig.js')
+	, ServiceConfig = require('./service/ServiceConfig.js')
 	, path = require("path")
 	, fs = require("fs")
-	, CacheStream = require("./cacheStream")
-	, View = require('./View')
+	, CacheStream = require("./utils/cacheStream")
+	, View = require('./view/View')
 	, zlib = require('zlib')
-	, utils = require('./utils')
-	 ,constructRoute = require('./route')
-	 ,requestRemote = require('./requestRemote')
-	, constants = require('./constants.js');
+	, utils = require('./utils/utils')
+	 ,constructRoute = require('./view/route')
+	 ,remoteWrapper = require('./service/remoteWrapper')
+	, constants = require('./utils/constants.js');
 
 const cacheLevel = {
 	no: 0,				// cache no will load data only from endpoint server, but ignore cache
@@ -643,7 +643,7 @@ const aRoutes = [
 	{ target: new RegExp(".*"), cb: serverCb },
 ];
 const route = constructRoute(aRoutes);
-var requestRemoteServer= requestRemote(config); 
+var requestRemoteServer= remoteWrapper(config); 
 
 var server = !config.isSSL() ? http.createServer(route) : https.createServer({
 	key: fs.readFileSync(path.normalize(config.get("SSLKey"))),

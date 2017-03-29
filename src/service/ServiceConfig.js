@@ -1,7 +1,7 @@
 'user strict';
 
 const path = require("path")
-	,constants = require('./constants.js')
+	,constants = require('../utils/constants.js')
 	 ,fs = require("fs");
 
 class ServiceConfig
