@@ -1,2 +1,2 @@
 # serviceProvider
-front service provider
+this tool worked as service simulator consumed by front end.

@@ -5,6 +5,7 @@ const http = require("http")
 	, ServiceConfig = require('./service/ServiceConfig.js')
 	, path = require("path")
 	, fs = require("fs")
+	,PouchDB = require('pouchdb')
 	, CacheStream = require("./utils/cacheStream")
 	, View = require('./view/View')
 	, zlib = require('zlib')
@@ -631,6 +632,20 @@ function serverCb(req, res) {
 var config = new ServerConfig();
 var serviceConfig = new ServiceConfig();
 var oCache = new Cache(config);
+
+
+// db.get('test').then(doc=>{
+
+// 	if(doc){
+// 		console.log(doc.name);
+// 	}else{
+// 		db.put({_id:'test',name:"first"})
+// 	}
+// }).catch(err=>{
+	
+// 	console.log(err)
+// db.put({_id:'test',name:"first"})
+// });
 
 var oView = new View();
 const getDataProxy = ()=>{return config.get('workingMode') == workingMode.proxyCache ? oCache: serviceConfig;};
