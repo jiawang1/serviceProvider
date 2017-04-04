@@ -5,258 +5,34 @@ const http = require("http")
 	, ServiceConfig = require('./service/ServiceConfig.js')
 	, path = require("path")
 	, fs = require("fs")
-	,PouchDB = require('pouchdb')
+	, PouchDB = require('pouchdb')
+	, Cache = require('./service/ProxyCache')
 	, CacheStream = require("./utils/cacheStream")
 	, View = require('./view/View')
 	, zlib = require('zlib')
 	, utils = require('./utils/utils')
-	 ,constructRoute = require('./view/route')
-	 ,remoteWrapper = require('./service/remoteWrapper')
+	, ServerConfig = require('./service/ServerConfig')
+	, constructRoute = require('./view/route')
+	, remoteWrapper = require('./service/remoteWrapper')
 	, constants = require('./utils/constants.js');
 
-const cacheLevel = {
-	no: 0,				// cache no will load data only from endpoint server, but ignore cache
-	normal: 1,			// cache normal will load data from endpoint server first, if no, then try to load data from cache, and persistent server data to cache
-	cacheOnly: 2			// cache only will load data from cache, but ignore enpoint server
-};
+// Map.prototype.copyFrom = function (...aMap) {
 
-/**
- * cacheFirst:  1 load cache -> 2 load remote -> 3 save cache -> 4 return.  working like data provider
- * remoteFirst: 1 load remote  -> yes , return , no -> 2 load from cache.  working with stable remote server 
- * remoteSync: 1 load remote -> yes , save cache, return , no -> return.  sync data 
-*/
-const cacheStrategy = {
-	cacheFirst: 0,
-	remoteFirst: 1,
-};
+// 	aMap.forEach((_map) => {
+// 		_map.forEach((v, k) => {
+// 			this.set(k, v);
+// 		});
+// 	});
+// };
 
-const workingMode = {
-	proxyCache: 0,			// worked as http proxy, support redirect to endpoint server, cache all kinds of response
-	dataProvider: 1,		// worked as data provider service, do not access other endpoint server, ONLY SUPPORT JSON data
-	serviceProvider: 2 	    // simulate service, it can access remote server , or load data from cache, depends on cache stratigy
-};
+// Map.prototype.toJson = function () {
+// 	return JSON.stringify([...this]);
+// };
 
-Map.prototype.copyFrom = function (...aMap) {
+// Map.fromJson = function (jsonStr) {
+// 	return new Map(JSON.parse(jsonStr));
+// };
 
-	aMap.forEach((_map) => {
-		_map.forEach((v, k) => {
-			this.set(k, v);
-		});
-	});
-};
-
-Map.prototype.toJson = function () {
-	return JSON.stringify([...this]);
-};
-
-Map.fromJson = function (jsonStr) {
-	return new Map(JSON.parse(jsonStr));
-};
-
-class ServerConfig {
-
-	static getDefault() {
-		var __map = new Map([
-			["port", 8079]
-			, ["cacheLevel", cacheLevel.normal]
-			, ["cacheStrategy",cacheStrategy.remoteFirst]
-			, ["workingMode", workingMode.dataProvider]
-			, ["sync", true]    // if sync = true , it will update cache automatically after response back from remote server
-			, ["endpointServer.address", "https://localhost"]
-			//	,["endpointServer.address","https://www3.lenovo.com"]
-			, ["endpointServer.port", 9002]
-			, ["endpointServer.host", undefined]
-			, ["endpointServer.user", undefined]
-			, ["endpointServer.password", undefined]
-			, ["cacheFile", "proxyCache.json"]
-			, ["SSLKey", "/Users/i054410/Documents/develop/self-cert/key.pem"]
-			, ["SSLCert", "/Users/i054410/Documents/develop/self-cert/cert.pem"]
-			, ["relativePath", "./../gitaws/hybris/bin/custom/ext-b2c/b2cstorefront/web/webroot"]
-			//	,["proxy.host","proxy.pal.sap.corp"]
-			//	,["proxy.port",8080]
-			, ["proxy.host", undefined]
-			, ["proxy.port", undefined]
-
-		]);
-
-		let __defaultConfig = {};
-		for (let [key, val] of __map) {
-			let tmp = __defaultConfig;
-			key.split('.').forEach((K, inx, arr) => {
-				if (inx === arr.length - 1) {
-					tmp[K] = val;
-				} else {
-					tmp = tmp[K] ? tmp[K] : tmp[K] = {};
-				}
-			});
-		}
-		__defaultConfig.keys = function () {
-			return __map.keys();
-		}
-		ServerConfig.getDefault = function () {
-			return __defaultConfig;
-		}
-		return __defaultConfig;
-	}
-
-	static get fields() {
-		return Array.from(ServerConfig.getDefault().keys());
-	}
-	set(key, val) {
-		if (ServerConfig.fields.indexOf(key) >= 0) {
-			let _o = this.serverMap;
-			key.split('.').some((key, inx, arr) => {
-				if (inx === arr.length - 1) {
-					if (_o[key] !== val) {
-						this.isChanged = true;
-						_o[key] = val;
-					}
-					return true;
-				} else {
-					_o = _o[key];
-				}
-			});
-		}
-		return this;
-	}
-	save() {
-		return new Promise((resolve, reject) => {
-			if (this.isChanged) {
-				fs.writeFile(constants.SERVER_CONFIG, JSON.stringify(this.serverMap), (err) => {
-					if (err) {
-						reject(err);
-					} else {
-						resolve('success');
-						this.isChanged = false;
-					}
-				})
-			} else {
-				resolve('no change');
-			}
-		});
-	}
-	get(key) {
-		if (key === "endpointServer.host") {
-			let matched = this.get("endpointServer.address").match(/^http(?:s)?:\/\/([^\/]+)/);
-			return matched?matched[1]:'';
-		}
-		var _o = this.serverMap;
-		key.split('.').forEach(key => {
-			_o = _o[key];
-		});
-		return _o;
-	}
-	hasProxy() {
-		return !!(this.get("proxy") && this.get("proxy").host && this.get("proxy").host.length > 0);
-	}
-
-	isSSL() {
-		return this.get("endpointServer.address").indexOf("https") >= 0;
-	}
-
-	__retrieveSymbol(key) {
-		return this.__symbolMap.get(key) || this.__symbolMap.set(key, Symbol(key)).get(key);
-	}
-
-	__loadEnvironmentConfig() {
-
-		const aKeys = ServerConfig.fields;
-		var args = {}, envmap = {};
-
-		// load from package.json first if start up by npm
-		aKeys.forEach((key) => {
-			if (process.env["npm_package_config_" + key]) {
-				//	 envmap.set(key, process.env["npm_package_config_" + key]);
-				assignValue(key, process.env["npm_package_config_" + key], envmap)
-			}
-		});
-
-		// load from command line
-		process.argv.slice().reduce((pre, item) => {
-			let matches;
-			if ((matches = pre.match(/^--(.*)/)) && (aKeys.indexOf(matches[1].toLowerCase()) >= 0)) {
-				//envmap.set(matches[1].toLowerCase(), item);
-				//envmap[matches[1].toLowerCase()] = item;
-				assignValue(matches[1].toLowerCase(), item, envmap);
-			}
-			return item;
-		});
-		return envmap;
-	}
-	calConfig() {
-		return this;
-	}
-	loadConfigFile() {
-		try {
-			fs.statSync(constants.SERVER_CONFIG);
-			var __config = fs.readFileSync(constants.SERVER_CONFIG, 'utf-8');
-			return __config.length > 0 ? JSON.parse(__config) : {};
-		} catch (e) {
-			try {
-				var stat = fs.statSync('./_config');
-
-			} catch (e) {
-				fs.mkdirSync('./_config');
-			}
-			fs.writeFile(constants.SERVER_CONFIG, '');
-			return {};
-		}
-	}
-	constructor() {
-		this.isChanged = false;
-		let defaultMap = ServerConfig.getDefault();
-		this.serverMap = {};
-		Object.assign(this.serverMap, defaultMap, this.loadConfigFile(), this.__loadEnvironmentConfig());
-		//	 this.serverMap.copyFrom(defaultMap,this.loadConfigFile(),this.__loadEnvironmentConfig());
-	}
-}
-class Cache {
-	constructor(config) {
-		this.cacheLevel = config.get("cacheLevel");
-		this.cacheFile = path.normalize(config.get("cacheFile"));
-		try {
-			this.cache = JSON.parse(fs.readFileSync(this.cacheFile, { encoding: "utf-8" }));
-		} catch (e) {
-			this.cache = {};
-		}
-	}
-	tryLoadLocalData(req, res) {
-		return new Promise((resolve, reject) => {
-			if (this.cacheLevel > cacheLevel.no) {
-				let __cacheRes = this.cache[this.generateCacheKey(req)];
-				if (__cacheRes) {
-					res.statusCode = "200";
-					Object.keys(__cacheRes.header).forEach((item) => {
-						res.setHeader(item, __cacheRes.header[item]);
-					});
-					res.end(__cacheRes.data);
-					resolve("done");
-				} else {
-					reject("no-data");
-				}
-			} else {
-				reject("no-data");
-			}
-		});
-	}
-	generateCacheKey(req) {
-		return req.method + req.url;
-	}
-	handlePersistence(req, res) {
-		fs.writeFile(this.cacheFile, JSON.stringify(this.cache), (err) => {
-			if (err) {
-				res.statusCode = 500;
-				res.statusMessage = `persistence cache to file failed: ${err.message} `;
-				res.end(res.statusMessage);
-				return;
-			}
-			res.statusCode = 200;
-			res.statusMessage = `persistence cache to file ${this.cacheFile} succeed`;
-			res.end(res.statusMessage);
-		});
-		return;
-	}
-}
 
 function handleStatic(req, res, cb, urlPart) {
 	let url = req.url;
@@ -290,17 +66,9 @@ function retrieveBody(req, res, cb) {
 	}
 }
 
-function bind(fn, context) {
-	return function () {
-		return fn.apply(context, [].slice.call(arguments));
-	}
-}
-
 function handleResource(req, res, cb, urlPart) {
-
 	let matched = req.url.match(urlPart)[0];
 	let _path = path.normalize(config.get("relativePath") + matched);
-
 	sendFile(_path, res);
 }
 
@@ -387,7 +155,7 @@ function handleServerConfiguration(req, res, cb, urlPart) {
 				break;
 
 			case '/save_service_config':
-				extractParam(req.bodyData).map(bind(mapParam, oService));
+				extractParam(req.bodyData).map(utils.bind(mapParam, oService));
 				if (oService.data) {
 					Promise.all([serviceConfig.addServiceURL(oService), serviceConfig.addService(oService)]).then(args => {
 						res.writeHead(200, {
@@ -415,7 +183,7 @@ function handleServerConfiguration(req, res, cb, urlPart) {
 				break;
 			case "/delete_service_config":
 
-				extractParam(req.bodyData).map(bind(mapParam, oService));
+				extractParam(req.bodyData).map(utils.bind(mapParam, oService));
 				serviceConfig.deleteService(oService).then(data => {
 					res.writeHead(200, {
 						"Content-Type": constants.MIME.json
@@ -428,7 +196,7 @@ function handleServerConfiguration(req, res, cb, urlPart) {
 				});
 				break;
 			case '/load_service':
-				extractParam(aMathed[1]).map(bind(mapParam, oService));
+				extractParam(aMathed[1]).map(utils.bind(mapParam, oService));
 				serviceConfig.loadServiceData(oService).then((data) => {
 					res.writeHead(200, {
 						"Content-Type": constants.MIME.json
@@ -484,7 +252,7 @@ function handleServerConfiguration(req, res, cb, urlPart) {
 				if (oRequestDuck.method === 'post' && oService.param && oService.param.length > 0) {
 					oRequestDuck.bodyData = oService.param;
 				}
-				return requestRemoteServer(req,res);
+				return requestRemoteServer(req, res);
 			});
 		}
 
@@ -531,25 +299,6 @@ function errResponse(err, res) {
 	res.end(err.message);
 }
 
-
-function generateCacheStream(req, hostRes) {
-
-	let oService = {};
-	oService.method = req.method.toLowerCase();
-	oService.header = hostRes.headers;
-
-	if (oService.method === 'get') {
-		let aUrl = req.url.split('?');
-		oService.url = aUrl[0];
-		oService.param = aUrl.length > 1 ? aUrl[1] : undefined;
-	} else {
-		oService.url = req.url;
-	}
-	oService.path = serviceConfig.generatePath({ method: oService.method, path: req.url.replace(/^(.*)\?.*/, "$1").replace(/\//g, "_") });
-	return new CacheStream({ oService: oService, serviceConfig: serviceConfig });
-}
-
-
 function handleRemoteRes(hostRes, req, res, cacheHandler) {
 	res.statusCode = hostRes.statusCode;
 	var __ignoreCache = req.headers["__ignore-cache__"];
@@ -571,16 +320,15 @@ function handleRemoteRes(hostRes, req, res, cacheHandler) {
 		}
 		hostRes.pipe(res);
 		return Promise.resolve();
-	}else if (hostRes.statusCode == 401 || hostRes.statusCode == 403){
+	} else if (hostRes.statusCode == 401 || hostRes.statusCode == 403) {
 		hostRes.pipe(res);
 		return Promise.resolve();
-	}else if (hostRes.statusCode >= 400){
+	} else if (hostRes.statusCode >= 400) {
 		return Promise.reject(hostRes);
 	}
 }
 
 function serverCb(req, res) {
-
 	if (req.url === "/favicon.ico") {
 		res.end("");
 		return;
@@ -588,19 +336,19 @@ function serverCb(req, res) {
 	var _reqeustHeader = req.headers;
 	var __ignoreCache = _reqeustHeader["__ignore-cache__"];
 
-	const _handleResponse = (hostRes, req, res)=>{
-		return config.get("sync")?handleRemoteRes(hostRes, req, res, generateCacheStream):handleRemoteRes(hostRes, req, res);
+	const _handleResponse = (hostRes, req, res) => {
+		return config.get("sync") ? handleRemoteRes(hostRes, req, res, utils.bind(serviceConfig.generateCacheStream,serviceConfig)) : handleRemoteRes(hostRes, req, res);
 	};
 
-	if (config.get("workingMode") == workingMode.dataProvider) {     // cache only
+	if (config.get("workingMode") == constants.workingMode.dataProvider) {     // cache only
 		getDataProxy().tryLoadLocalData(req, res).then(data => {
 			console.log("find cache");
 		}).catch(err => {
 			res.statusCode = 404;
 			res.end(`can not find cache for ${req.url}`);
 		});
-	} else if (config.get("workingMode") == workingMode.serviceProvider) {
-		if (config.get("cacheStrategy") == cacheStrategy.cacheFirst) {
+	} else if (config.get("workingMode") == constants.workingMode.serviceProvider) {
+		if (config.get("cacheStrategy") == constants.cacheStrategy.cacheFirst) {
 			getDataProxy().tryLoadLocalData(req, res).then(data => {
 				console.log(`find in cache ${req.url}`);
 			}).catch(err => {
@@ -611,13 +359,13 @@ function serverCb(req, res) {
 					errResponse(err, res);
 				});
 			});
-		} else if(config.get("cacheStrategy") == cacheStrategy.remoteFirst){
+		} else if (config.get("cacheStrategy") == constants.cacheStrategy.remoteFirst) {
 			requestRemoteServer(req, res).then((hostRes) => {
 				_handleResponse(hostRes, req, res);
 			}).catch((err) => {
 				getDataProxy().tryLoadLocalData(req, res).then(data => {
 					console.log(`find in cache ${req.url}`);
-				}).catch(()=>{
+				}).catch(() => {
 					console.error(`failed to find in cache ${req.url}`);
 					errResponse(err, res);
 				});
@@ -625,40 +373,26 @@ function serverCb(req, res) {
 		}
 	} else {     // for proxy case
 		//TODO proxy
-		
+
 
 	}
 }
 var config = new ServerConfig();
-var serviceConfig = new ServiceConfig();
+var serviceConfig = new ServiceConfig(config);
 var oCache = new Cache(config);
-
-
-// db.get('test').then(doc=>{
-
-// 	if(doc){
-// 		console.log(doc.name);
-// 	}else{
-// 		db.put({_id:'test',name:"first"})
-// 	}
-// }).catch(err=>{
-	
-// 	console.log(err)
-// db.put({_id:'test',name:"first"})
-// });
-
 var oView = new View();
-const getDataProxy = ()=>{return config.get('workingMode') == workingMode.proxyCache ? oCache: serviceConfig;};
+const getDataProxy = () => { return config.get('workingMode') == constants.workingMode.proxyCache ? oCache : serviceConfig; };
+
 const aRoutes = [
 	{ target: new RegExp(".*"), cb: retrieveBody },
-	{ target: new RegExp("_service_persistent"), cb: bind(oCache.handlePersistence, oCache) },
+	{ target: new RegExp("_service_persistent"), cb: utils.bind(oCache.handlePersistence, oCache) },
 	{ target: new RegExp("/__server_config__(.*)"), cb: handleServerConfiguration },
 	{ target: new RegExp("/_ui/(.*)"), cb: handleResource },
 	{ target: new RegExp("/public/"), cb: handleStatic },
 	{ target: new RegExp(".*"), cb: serverCb },
 ];
 const route = constructRoute(aRoutes);
-var requestRemoteServer= remoteWrapper(config); 
+const requestRemoteServer = remoteWrapper(config);
 
 var server = !config.isSSL() ? http.createServer(route) : https.createServer({
 	key: fs.readFileSync(path.normalize(config.get("SSLKey"))),
