@@ -40,3 +40,5 @@ jspm_packages
 **/src/_config/**
 proxyCache.json
 **/src/fivestar/**
+**/src/_config*/**
+proxyCache.json
