@@ -74,7 +74,7 @@ function handleResource(req, res, cb, urlPart) {
 
 function sendFile(_path, res) {
 	let ext = path.extname(_path).toLowerCase().replace(".", "");
-	let mime = constants.MIME[ext] || MIME['text'];
+	let mime = constants.MIME[ext] || constants.MIME['text'];
 	let fileRaw = fs.createReadStream(_path);
 
 	fileRaw.on("open", () => {
@@ -388,6 +388,7 @@ const aRoutes = [
 	{ target: new RegExp("_service_persistent"), cb: utils.bind(oCache.handlePersistence, oCache) },
 	{ target: new RegExp("/__server_config__(.*)"), cb: handleServerConfiguration },
 	{ target: new RegExp("/_ui/(.*)"), cb: handleResource },
+	//{ target: new RegExp("/webapp/(.*)"), cb: handleResource },
 	{ target: new RegExp("/public/"), cb: handleStatic },
 	{ target: new RegExp(".*"), cb: serverCb },
 ];

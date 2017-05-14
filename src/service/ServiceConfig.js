@@ -2,6 +2,7 @@
 
 const path = require("path")
 	, constants = require('../utils/constants.js')
+	,CacheStream = require('../utils/cacheStream')
 	, fs = require("fs");
 
 class ServiceConfig {

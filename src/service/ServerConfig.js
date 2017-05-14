@@ -1,7 +1,7 @@
 
 const PouchDB = require('pouchdb'),
       fs = require('fs'),
-	  fileLoader = require('./FileLaoder'),
+	  fileLoader = require('./FileLoader'),
 	  dbLoader = require('./DBLoader'),
       constants = require('../utils/constants');
 
@@ -157,7 +157,7 @@ class ServerConfig {
 	}
 
 	getServerLoader(){
-		return this.get('toDatabase')?dbLoader:fileLoader;
+		return this.get('toDatabase')==="true"?dbLoader:fileLoader;
 	}
 
 	__initDB(name){

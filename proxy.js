@@ -594,7 +594,8 @@ const http = require("http")
 			 [new RegExp(".*"),retrieveBody ]
 			,[new RegExp("_service_persistent"), bind( oCache.handlePersistence, oCache)]
 			,[new RegExp("/__server_config__(.*)"),handleServerConfiguration ]
-			,[new RegExp("/_ui/(.*)"), handleResource]
+			//,[new RegExp("/_ui/(.*)"), handleResource]
+			,[new RegExp("/webapp/(.*)"), handleResource]
 			,[new RegExp("/public/"), handleStatic]
 			,[new RegExp(".*"),serverCb]
 		 ]);
