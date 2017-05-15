@@ -7,7 +7,7 @@
     "port": 8079
   },
   "scripts": {
-    "start": "node-debug proxy.js",
+    "start": "node src/proxy.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {

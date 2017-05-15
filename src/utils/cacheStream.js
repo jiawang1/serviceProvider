@@ -27,7 +27,6 @@ const Transform = require("stream").Transform,
 			let data = new Buffer(this.size);
 			let pos = 0;
 			this.chunks.forEach((chunk)=>{
-
 				chunk.copy(data, pos);
 				pos += chunk.length;
 			});
@@ -35,9 +34,7 @@ const Transform = require("stream").Transform,
 			if(this.oCache){
 				this.oCache[this.key] = {header : this.header, data: data};
 				done();
-
 			}else{
-
 				this.oService.data = data.toString();
 				Promise.all([this.serviceConfig.addServiceURL(this.oService),this.serviceConfig.addService(this.oService)]).then(args=>{
 					done();
@@ -47,6 +44,5 @@ const Transform = require("stream").Transform,
 				});
 			}
 		}
-
 	}
 	module.exports = CacheStream;

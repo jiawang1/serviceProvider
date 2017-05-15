@@ -2,7 +2,7 @@
 
 const path = require("path")
 	, constants = require('../utils/constants.js')
-	,CacheStream = require('../utils/cacheStream')
+	,CacheStream = require('../utils/CacheBranchStream')
 	, fs = require("fs");
 
 class ServiceConfig {
@@ -41,7 +41,12 @@ class ServiceConfig {
 			oService.url = req.url;
 		}
 		oService.path = this.generatePath({ method: oService.method, path: req.url.replace(/^(.*)\?.*/, "$1").replace(/\//g, "_") });
-		return new CacheStream({ oService: oService, serviceConfig: this });
+		
+		const cacheFromStream = (data)=>{
+			oService.data = data;
+			return Promise.all([this.addServiceURL(oService), this.addService(oService)]);
+		};
+		return new CacheStream(cacheFromStream);
 	}
 
 	__hasService(oService) {

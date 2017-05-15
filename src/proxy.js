@@ -7,7 +7,6 @@ const http = require("http")
 	, fs = require("fs")
 	, PouchDB = require('pouchdb')
 	, Cache = require('./service/ProxyCache')
-	, CacheStream = require("./utils/cacheStream")
 	, View = require('./view/View')
 	, zlib = require('zlib')
 	, utils = require('./utils/utils')
@@ -40,17 +39,7 @@ function handleStatic(req, res, cb, urlPart) {
 	sendFile(_path, res);
 }
 
-function assignValue(key, val, oo) {
-	key.split('.').forEach((key, inx, arr) => {
-		if (inx === arr.length - 1) {
-			oo[key] = val;
-		} else {
-			if (oo[key] === undefined) {
-				oo[key] = {};
-			}
-		}
-	});
-}
+
 function retrieveBody(req, res, cb) {
 
 	if (req.method.toUpperCase() === "POST") {

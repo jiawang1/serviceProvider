@@ -26,6 +26,9 @@ const requestViaProxy = ((fn)=> ()=>{
 			path: target.path,
 			method: target.method
 		};
+		
+		//TODO should take original header 
+		 
 		target.auth && (ops.headers = { Authorization: target.auth });
 		let proxyReq = https.request(ops, (res) => {
 			cb.call(null, null, res);
