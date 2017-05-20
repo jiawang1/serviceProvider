@@ -59,6 +59,13 @@ defineConst({
 		no: 0,				// cache no will load data only from endpoint server, but ignore cache
 		normal: 1,			// cache normal will load data from endpoint server first, if no, then try to load data from cache, and persistent server data to cache
 		cacheOnly: 2			// cache only will load data from cache, but ignore enpoint server
+	},
+	method:{
+		httpGet:'GET',
+		httpPost:'POST',
+		httpPut:'PUT',
+		httpDelete:'DELETE',
+		httpOptions:'OPTIONS'
 	}
 
 });

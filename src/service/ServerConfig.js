@@ -23,6 +23,7 @@ class ServerConfig {
 			, ["endpointServer.user", undefined]
 			, ["endpointServer.password", undefined]
 			, ["cacheFile", "proxyCache.json"]
+			, ["resourceRoute", "/_ui/(.*)"]   //"/webapp/(.*)"
 			, ["SSLKey", "/Users/i054410/Documents/develop/self-cert/key.pem"]
 			, ["SSLCert", "/Users/i054410/Documents/develop/self-cert/cert.pem"]
 			, ["relativePath", "./../gitaws/hybris/bin/custom/ext-b2c/b2cstorefront/web/webroot"]

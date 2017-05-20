@@ -39,10 +39,8 @@ function handleStatic(req, res, cb, urlPart) {
 	sendFile(_path, res);
 }
 
-
 function retrieveBody(req, res, cb) {
-
-	if (req.method.toUpperCase() === "POST") {
+	if (req.method.toUpperCase() === constants.method.httpPost) {
 		var __reqBody = "";
 		req.on("data", (data) => {
 			__reqBody += data;
@@ -236,7 +234,7 @@ function handleServerConfiguration(req, res, cb, urlPart) {
 					url: oService.url,
 					method: oService.method
 				};
-				if (oRequestDuck.method === 'post' && oService.param && oService.param.length > 0) {
+				if (oRequestDuck.method.toUpperCase() === constants.method.httpPost && oService.param && oService.param.length > 0) {
 					oRequestDuck.bodyData = oService.param;
 				}
 				return requestRemoteServer(req, res);
@@ -316,10 +314,6 @@ function handleRemoteRes(hostRes, req, res, cacheHandler) {
 }
 
 function serverCb(req, res) {
-	if (req.url === "/favicon.ico") {
-		res.end("");
-		return;
-	}
 	var _reqeustHeader = req.headers;
 	var __ignoreCache = _reqeustHeader["__ignore-cache__"];
 
@@ -364,6 +358,33 @@ function serverCb(req, res) {
 
 	}
 }
+
+function preHandle(req, res, cb){
+
+	if (req.url === "/favicon.ico") {
+		res.end("");
+		return;
+	}else if(req.method.toUpperCase() === constants.method.httpOptions){  //handle preflight for CORS
+		if(req.headers['access-control-request-method'] || req.headers['access-control-request-headers']){
+			res.writeHead(200,{
+				'Access-Control-Allow-Origin':'*',
+				'Access-Control-Allow-Methods':Object.keys(constants.method).map(key=>constants.method[key]).join(','),
+			});
+			res.end("");
+			return;
+		}
+	}else if(req.method.toUpperCase() === constants.method.httpPost){
+		var __reqBody = "";
+		req.on("data", (data) => {
+			__reqBody += data;
+		}).on("end", () => {
+			req.bodyData = __reqBody;
+			cb(req, res);
+		});
+	}else{
+		cb(req, res);
+	}
+}
 var config = new ServerConfig();
 var serviceConfig = new ServiceConfig(config);
 var oCache = new Cache(config);
@@ -371,18 +392,17 @@ var oView = new View();
 const getDataProxy = () => { return config.get('workingMode') == constants.workingMode.proxyCache ? oCache : serviceConfig; };
 
 const aRoutes = [
-	{ target: new RegExp(".*"), cb: retrieveBody },
+	{ target: new RegExp(".*"), cb: preHandle },
 	{ target: new RegExp("_service_persistent"), cb: utils.bind(oCache.handlePersistence, oCache) },
 	{ target: new RegExp("/__server_config__(.*)"), cb: handleServerConfiguration },
-	{ target: new RegExp("/_ui/(.*)"), cb: handleResource },
-	//{ target: new RegExp("/webapp/(.*)"), cb: handleResource },
+	{ target: new RegExp(config.get('resourceRoute')), cb: handleResource },
 	{ target: new RegExp("/public/"), cb: handleStatic },
 	{ target: new RegExp(".*"), cb: serverCb },
 ];
 const route = constructRoute(aRoutes);
 const requestRemoteServer = remoteWrapper(config);
 
-var server = !config.isSSL() ? http.createServer(route) : https.createServer({
+const server = !config.isSSL() ? http.createServer(route) : https.createServer({
 	key: fs.readFileSync(path.normalize(config.get("SSLKey"))),
 	cert: fs.readFileSync(path.normalize(config.get("SSLCert")))
 }, route);
