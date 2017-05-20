@@ -8,15 +8,16 @@ const requestViaProxy = ((fn)=> ()=>{
 })((proxyOp, target, cb) => {
 
 	var targetPort = ":" + (target.port || 443);
+	var headers = target.headers;
+	headers.host = target.host + targetPort;
+
 	http.request({
 		hostname: proxyOp.host
 		, port: proxyOp.port
 		, method: "CONNECT"
 		, agent: false
 		, path: target.host + targetPort  //"www3.lenovo.com:443"
-		, headers: {
-			host: target.host + targetPort  //"www3.lenovo.com:443"
-		}
+		, headers: headers
 	}).on("connect", (proxyRes, socket, head) => {
 
 		let ops = {
@@ -70,6 +71,7 @@ const requestRemoteServer = (config)=>(req, res) =>{
 			prot: endServerPort,
 			method: req.method,
 			auth: oAuth,
+			headers:req.headers,
 			bodyData: req.bodyData
 		});
 

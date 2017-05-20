@@ -225,9 +225,7 @@ function handleServerConfiguration(req, res, cb, urlPart) {
 				break;
 		}
 
-
 		function batchSyncService(res) {
-
 			return serviceConfig.getServiceList().map((oService) => {
 				var oRequestDuck = {
 					headers: {

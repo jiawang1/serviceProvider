@@ -172,4 +172,16 @@ class ServerConfig {
 	}
 }
 
+function assignValue(key, val, oo) {
+	key.split('.').forEach((key, inx, arr) => {
+		if (inx === arr.length - 1) {
+			oo[key] = val;
+		} else {
+			if (oo[key] === undefined) {
+				oo[key] = {};
+			}
+		}
+	});
+}
+
 module.exports = ServerConfig;
