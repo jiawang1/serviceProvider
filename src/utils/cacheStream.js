@@ -1,4 +1,7 @@
 "use strict";
+/**
+ * deprecated
+ */
 const Transform = require("stream").Transform,
 	zlib = require("zlib");
 	class CacheStream extends Transform{

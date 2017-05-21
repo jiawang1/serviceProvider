@@ -39,20 +39,6 @@ function handleStatic(req, res, cb, urlPart) {
 	sendFile(_path, res);
 }
 
-function retrieveBody(req, res, cb) {
-	if (req.method.toUpperCase() === constants.method.httpPost) {
-		var __reqBody = "";
-		req.on("data", (data) => {
-			__reqBody += data;
-		}).on("end", () => {
-			req.bodyData = __reqBody;
-			cb(req, res);
-		});
-	} else {
-		cb(req, res);
-	}
-}
-
 function handleResource(req, res, cb, urlPart) {
 	let matched = req.url.match(urlPart)[0];
 	let _path = path.normalize(config.get("relativePath") + matched);
@@ -334,28 +320,31 @@ function serverCb(req, res) {
 				console.log(`find in cache ${req.url}`);
 			}).catch(err => {
 				console.log(err.stack || err);
-				requestRemoteServer(req, res).then((hostRes) => {
+				requestRemoteServer(req, res).then(hostRes => {
 					_handleResponse(hostRes, req, res);
 				}).catch(err => {
 					errResponse(err, res);
 				});
 			});
 		} else if (config.get("cacheStrategy") == constants.cacheStrategy.remoteFirst) {
-			requestRemoteServer(req, res).then((hostRes) => {
+			requestRemoteServer(req, res).then(hostRes => {
 				_handleResponse(hostRes, req, res);
 			}).catch((err) => {
 				getDataProxy().tryLoadLocalData(req, res).then(data => {
 					console.log(`find in cache ${req.url}`);
-				}).catch(() => {
+				}).catch(err => {
 					console.error(`failed to find in cache ${req.url}`);
 					errResponse(err, res);
 				});
 			});
 		}
 	} else {     // for proxy case
-		//TODO proxy
-
-
+		requestRemoteServer(req, res).then(hostRes=>{
+			handleRemoteRes(hostRes, req, res);
+		}).catch(err => {
+			console.error(`failed to find in cache ${req.url}`);
+			errResponse(err, res);
+		});
 	}
 }
 

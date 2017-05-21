@@ -1,4 +1,4 @@
-'user strict';
+'use strict';
 
 const path = require("path")
 	, constants = require('../utils/constants.js')
@@ -16,7 +16,6 @@ class ServiceConfig {
 	}
 
 	__saveServiceList(oService) {
-
 		return new Promise((resolve, reject) => {
 			fs.writeFile(constants.SERVICE_CONFIG, JSON.stringify(this.serviceMap), (err) => {
 				if (err) {
@@ -29,19 +28,7 @@ class ServiceConfig {
 	}
 
 	generateCacheStream(req, hostRes) {
-		let oService = {};
-		oService.method = req.method.toLowerCase();
-		oService.header = hostRes.headers;
-
-		if (oService.method === 'get') {
-			let aUrl = req.url.split('?');
-			oService.url = aUrl[0];
-			oService.param = aUrl.length > 1 ? aUrl[1] : undefined;
-		} else {
-			oService.url = req.url;
-		}
-		oService.path = this.generatePath({ method: oService.method, path: req.url.replace(/^(.*)\?.*/, "$1").replace(/\//g, "_") });
-		
+		let oService = this.__generateConfigFromRequest(req, hostRes);
 		const cacheFromStream = (data)=>{
 			oService.data = data;
 			return Promise.all([this.addServiceURL(oService), this.addService(oService)]);
@@ -49,12 +36,26 @@ class ServiceConfig {
 		return new CacheStream(cacheFromStream);
 	}
 
+	__generateConfigFromRequest(req, res){
+		let oService = {};
+		oService.method = req.method.toLowerCase();
+		oService.headers = res.headers;
+		if (oService.method === constants.method.httpGet) {
+			let aUrl = req.url.split('?');
+			oService.url = aUrl[0];
+			oService.param = aUrl.length > 1 ? aUrl[1] : undefined;
+		} else {
+			oService.url = req.url;
+		}
+		oService.path = this.generatePath({ method: oService.method, path: req.url.replace(/^(.*)\?.*/, "$1").replace(/\//g, "_") });
+		return oService;
+	}
+
 	__hasService(oService) {
 		return this.__findService(oService) >= 0;
 	}
 
 	__findService(oService) {
-
 		return this.serviceMap.findIndex(service => {
 			if (oService.method === 'get') {
 				return service.url === oService.url && service.method === oService.method && service.param === oService.param;
@@ -62,7 +63,6 @@ class ServiceConfig {
 				return service.url === oService.url && service.method === oService.method;
 			}
 		});
-
 	}
 
 	addServiceURL(oService) {
@@ -70,7 +70,6 @@ class ServiceConfig {
 		return new Promise((resolve, reject) => {
 			// only get can support multi param
 			if (!this.__hasService(oService)) {
-
 				let __service = Object.assign({}, oService);
 				__service.data = null;
 				this.serviceMap.push(__service);
@@ -111,11 +110,15 @@ class ServiceConfig {
 		var _path = this.generatePath(oService);
 		// support multi-param only for GET method
 		var _key = this.__generateKey(oService);
+		var __cacheData = {
+			headers: oService.headers||null,
+			body:oService.data
+		};
 		return new Promise((resolve, reject) => {
 			fs.readFile(_path, 'utf-8', (err, data) => {
 				if (err) {
 					let _oCache = {};
-					_oCache[_key] = oService.data;
+					_oCache[_key] = __cacheData;
 					fs.writeFile(_path, JSON.stringify(_oCache), 'utf-8', (err) => {
 						if (err) {
 							reject(err);
@@ -125,7 +128,7 @@ class ServiceConfig {
 					});
 				} else {
 					let cacheData = JSON.parse(data);
-					cacheData[_key] = oService.data;
+					cacheData[_key] = __cacheData;
 					fs.writeFile(_path, JSON.stringify(cacheData), 'utf-8', (err) => {
 						if (err) {
 							reject(err);
@@ -238,7 +241,7 @@ class ServiceConfig {
 					"Content-Type": constants.MIME.json
 				});
 			}
-			res.end(data);
+			res.end(data.body || data);
 			return data;
 		});
 	}
