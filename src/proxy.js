@@ -321,16 +321,16 @@ function serverCb(req, res) {
 			}).catch(err => {
 				console.log(err.stack || err);
 				requestRemoteServer(req, res).then(hostRes => {
-					_handleResponse(hostRes, req, res);
+					return _handleResponse(hostRes, req, res);
 				}).catch(err => {
 					errResponse(err, res);
 				});
 			});
 		} else if (config.get("cacheStrategy") == constants.cacheStrategy.remoteFirst) {
 			requestRemoteServer(req, res).then(hostRes => {
-				_handleResponse(hostRes, req, res);
+				return _handleResponse(hostRes, req, res);
 			}).catch((err) => {
-				getDataProxy().tryLoadLocalData(req, res).then(data => {
+				 return getDataProxy().tryLoadLocalData(req, res).then(data => {
 					console.log(`find in cache ${req.url}`);
 				}).catch(err => {
 					console.error(`failed to find in cache ${req.url}`);
@@ -340,7 +340,7 @@ function serverCb(req, res) {
 		}
 	} else {     // for proxy case
 		requestRemoteServer(req, res).then(hostRes=>{
-			handleRemoteRes(hostRes, req, res);
+			return handleRemoteRes(hostRes, req, res);
 		}).catch(err => {
 			console.error(`failed to find in cache ${req.url}`);
 			errResponse(err, res);
