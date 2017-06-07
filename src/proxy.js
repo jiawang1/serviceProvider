@@ -15,23 +15,6 @@ const http = require("http")
 	, remoteWrapper = require('./service/remoteWrapper')
 	, constants = require('./utils/constants.js');
 
-// Map.prototype.copyFrom = function (...aMap) {
-
-// 	aMap.forEach((_map) => {
-// 		_map.forEach((v, k) => {
-// 			this.set(k, v);
-// 		});
-// 	});
-// };
-
-// Map.prototype.toJson = function () {
-// 	return JSON.stringify([...this]);
-// };
-
-// Map.fromJson = function (jsonStr) {
-// 	return new Map(JSON.parse(jsonStr));
-// };
-
 
 function handleStatic(req, res, cb, urlPart) {
 	let url = req.url;
@@ -174,7 +157,7 @@ function handleServerConfiguration(req, res, cb, urlPart) {
 					res.writeHead(200, {
 						"Content-Type": constants.MIME.json
 					});
-					oService.data = data;
+					oService.data = data.body || data;
 					res.end(JSON.stringify(oService));
 				}).catch(err => {
 					res.writeHead(200, {
@@ -304,7 +287,7 @@ function serverCb(req, res) {
 	var __ignoreCache = _reqeustHeader["__ignore-cache__"];
 
 	const _handleResponse = (hostRes, req, res) => {
-		return config.get("sync") ? handleRemoteRes(hostRes, req, res, utils.bind(serviceConfig.generateCacheStream,serviceConfig)) : handleRemoteRes(hostRes, req, res);
+		return config.get("sync") ? handleRemoteRes(hostRes, req, res, utils.bind(serviceConfig.generateCacheStream, serviceConfig)) : handleRemoteRes(hostRes, req, res);
 	};
 
 	if (config.get("workingMode") == constants.workingMode.dataProvider) {     // cache only
@@ -330,7 +313,7 @@ function serverCb(req, res) {
 			requestRemoteServer(req, res).then(hostRes => {
 				return _handleResponse(hostRes, req, res);
 			}).catch((err) => {
-				 return getDataProxy().tryLoadLocalData(req, res).then(data => {
+				return getDataProxy().tryLoadLocalData(req, res).then(data => {
 					console.log(`find in cache ${req.url}`);
 				}).catch(err => {
 					console.error(`failed to find in cache ${req.url}`);
@@ -339,7 +322,7 @@ function serverCb(req, res) {
 			});
 		}
 	} else {     // for proxy case
-		requestRemoteServer(req, res).then(hostRes=>{
+		requestRemoteServer(req, res).then(hostRes => {
 			return handleRemoteRes(hostRes, req, res);
 		}).catch(err => {
 			console.error(`failed to find in cache ${req.url}`);
@@ -348,21 +331,21 @@ function serverCb(req, res) {
 	}
 }
 
-function preHandle(req, res, cb){
+function preHandle(req, res, cb) {
 
 	if (req.url === "/favicon.ico") {
 		res.end("");
 		return;
-	}else if(req.method.toUpperCase() === constants.method.httpOptions){  //handle preflight for CORS
-		if(req.headers['access-control-request-method'] || req.headers['access-control-request-headers']){
-			res.writeHead(200,{
-				'Access-Control-Allow-Origin':'*',
-				'Access-Control-Allow-Methods':Object.keys(constants.method).map(key=>constants.method[key]).join(','),
+	} else if (req.method.toUpperCase() === constants.method.httpOptions) {  //handle preflight for CORS
+		if (req.headers['access-control-request-method'] || req.headers['access-control-request-headers']) {
+			res.writeHead(200, {
+				'Access-Control-Allow-Origin': '*',
+				'Access-Control-Allow-Methods': Object.keys(constants.method).map(key => constants.method[key]).join(','),
 			});
 			res.end("");
 			return;
 		}
-	}else if(req.method.toUpperCase() === constants.method.httpPost){
+	} else if (req.method.toUpperCase() === constants.method.httpPost) {
 		var __reqBody = "";
 		req.on("data", (data) => {
 			__reqBody += data;
@@ -370,7 +353,7 @@ function preHandle(req, res, cb){
 			req.bodyData = __reqBody;
 			cb(req, res);
 		});
-	}else{
+	} else {
 		cb(req, res);
 	}
 }

@@ -217,11 +217,12 @@ class ServiceConfig {
 		let oService = {};
 		oService.method = req.method.toLowerCase();
 		if (oService.method === 'get') {
-			let _aUrl = req.url.split("?");
-			oService.url = _aUrl[0];
-			if (_aUrl[1] && _aUrl[1].length > 0) {
-				oService.param = decodeURIComponent(_aUrl[1].replace(/\+/g, '%20'));
-			}
+			// let _aUrl = req.url.split("?");
+			// oService.url = _aUrl[0];
+			// if (_aUrl[1] && _aUrl[1].length > 0) {
+			// 	oService.param = decodeURIComponent(_aUrl[1].replace(/\+/g, '%20'));
+			// }
+			oService.url = req.url;
 		} else {
 			oService.url = req.url;
 			oService.param = decodeURIComponent(req.bodyData.replace(/\+/g, '%20'));
@@ -241,7 +242,8 @@ class ServiceConfig {
 					"Content-Type": constants.MIME.json
 				});
 			}
-			res.end(data.body || data);
+
+			res.end(JSON.parse(JSON.stringify(data.body || data)));
 			return data;
 		});
 	}
