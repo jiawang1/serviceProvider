@@ -13,9 +13,13 @@ const http = require("http")
 	, ServerConfig = require('./service/ServerConfig')
 	, constructRoute = require('./view/route')
 	, remoteWrapper = require('./service/remoteWrapper')
+    , router = require('./view/ResourceRouter.js')
 	, constants = require('./utils/constants.js');
 
-
+/*
+ * this function used to handle request for server consiguration page
+ * so the path is ../public
+  */
 function handleStatic(req, res, cb, urlPart) {
 	let url = req.url;
 	let _path = path.join("..", url);
@@ -24,7 +28,7 @@ function handleStatic(req, res, cb, urlPart) {
 
 function handleResource(req, res, cb, urlPart) {
 	let matched = req.url.match(urlPart)[0];
-	let _path = path.normalize(config.get("relativePath") + matched);
+	let _path = path.normalize(config.get("rootPath") + matched);
 	sendFile(_path, res);
 }
 
@@ -367,17 +371,20 @@ const aRoutes = [
 	{ target: new RegExp(".*"), cb: preHandle },
 	{ target: new RegExp("_service_persistent"), cb: utils.bind(oCache.handlePersistence, oCache) },
 	{ target: new RegExp("/__server_config__(.*)"), cb: handleServerConfiguration },
-	{ target: new RegExp(config.get('resourceRoute')), cb: handleResource },
+    { target: new RegExp(config.get('resourceRoute')), cb: handleResource },
+    router.getSchoolRoutes(config.get("rootPath")),
 	{ target: new RegExp("/public/"), cb: handleStatic },
 	{ target: new RegExp(".*"), cb: serverCb },
 ];
 const route = constructRoute(aRoutes);
 const requestRemoteServer = remoteWrapper(config);
 
-const server = !config.isSSL() ? http.createServer(route) : https.createServer({
-	key: fs.readFileSync(path.normalize(config.get("SSLKey"))),
-	cert: fs.readFileSync(path.normalize(config.get("SSLCert")))
-}, route);
+// const server = !config.isSSL() ? http.createServer(route) : https.createServer({
+// 	key: fs.readFileSync(path.normalize(config.get("SSLKey"))),
+// 	cert: fs.readFileSync(path.normalize(config.get("SSLCert")))
+// }, route);
+
+const server =  http.createServer(route);
 
 server.listen(config.get("port"));
 console.log(`Server is running at 127.0.0.1 , port ${config.get("port")}`);

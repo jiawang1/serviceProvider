@@ -4,7 +4,10 @@ const Transform = require("stream").Transform,
 class CacheBranchStream extends Transform {
 
     constructor(promiseCB) {
+        super();
         this.cb = promiseCB;
+        		this.chunks = [];
+			this.size = 0;
     }
 
     _transform(chunk, encoding, cb) {
@@ -23,10 +26,15 @@ class CacheBranchStream extends Transform {
             pos += chunk.length;
         });
 
-        this.cb(data.toString()).then(done).catch(err => {
-            console.error(err);
-            done();
-        });
-        
+        this.cb(data.toString())
+            .then(()=>{
+                return done();
+            })
+            .catch(err => {
+                console.error(err);
+                done();
+            });
     }
 }
+
+module.exports = CacheBranchStream;

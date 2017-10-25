@@ -80,7 +80,14 @@ const requestRemoteServer = (config)=>(req, res) =>{
 		var __option = {};
 		__option.method = req.method;
 		__option.headers = Object.assign(__option.headers || {}, req.headers);
-		__option.headers.host = endServerHost;
+        __option.headers.host = endServerHost;
+
+        /*
+         *  some site will set cookie to stick to specific domain, will check whether 
+         *  refer will be the same with host
+         * */
+        delete __option.headers.referer;
+
 		oAuth && (__option.headers.Authorization = oAuth);
 		if (config.hasProxy()) {
 
@@ -104,18 +111,27 @@ const requestRemoteServer = (config)=>(req, res) =>{
 				, path: req.url
 				, rejectUnauthorized: false
 			});
-		}
+        }
+
 		return new Promise((resolve, reject) => {
-			var __req = (config.isSSL() ? https : http).request(__option, (hostRes) => {
-				// if (Math.floor(hostRes.statusCode / 100) >= 4) {
-				// 	let err = new Error(`request failed with status code ${hostRes.statusCode}`);
-				// 	err.statusCode = hostRes.statusCode;
-				// 	reject(err);
-				// } else {
-				// 	resolve(hostRes);
-				// }
-				resolve(hostRes);
-			});
+            var __req = (config.isSSL() ? https : http).request(__option , (hostRes) => {
+                // if (Math.floor(hostRes.statusCode / 100) >= 4) {
+                // 	let err = new Error(`request failed with status code ${hostRes.statusCode}`);
+                // 	err.statusCode = hostRes.statusCode;
+                // 	reject(err);
+                // } else {
+                // 	resolve(hostRes);
+                // }
+
+                if( hostRes.headers['set-cookie']){
+
+                    hostRes.headers['set-cookie']= hostRes.headers['set-cookie'].map((cookie)=>{
+                        return cookie.replace(/(domain=)(.*)(;)/,"$1localhost$3");
+                    });
+
+                }
+                resolve(hostRes);
+            });
 			__req.on("error", (e) => {
 				reject(e);
 			});
