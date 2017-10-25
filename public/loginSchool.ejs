@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        
+    </head>
+    <body>
+        <div id="logindiv">
+            <div id="spnnoshowZFU">
+            </div>
+            <div id="loginicon">
+            </div>
+            <form id="login-form">
+                <div>
+                    <label for="username">Username</label>
+                    <input name="username" type="text" id="username" class="inputtext" />
+                </div>
+                <div>
+                    <label for="password">Password</label>
+                    <input name="password" type="password" id="password" class="inputtext" />
+                </div>
+                <div >
+                    <input type="button"  onclick="login(event)" value="Login"></input>
+                </div>
+            </form>
+            <span  id="response" ></span>
+            <script type="application/javascript" src="/public/jquery-1.11.1.min.js"></script>
+            <script type="application/javascript" >
+                function login (e){
+                    e.preventDefault();
+
+                    if($("#username").val().length ===0 || $("#password").val().length ===0  ){
+                         $("#response").text("supply user name and password");
+                        return;
+                    }
+                        $.post("/login/secure.ashx",  $("#login-form").serialize(), function(){
+                        $("#response").text("success")
+                    });               
+                }
+            </script>
+
+    </body>
+
+
+</html>
