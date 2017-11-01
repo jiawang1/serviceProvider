@@ -114,32 +114,36 @@ class ServiceConfig {
 			headers: oService.headers||null,
 			body:oService.data
 		};
-		return new Promise((resolve, reject) => {
-			fs.readFile(_path, 'utf-8', (err, data) => {
-				if (err) {
-					let _oCache = {};
-					_oCache[_key] = __cacheData;
-					fs.writeFile(_path, JSON.stringify(_oCache), 'utf-8', (err) => {
-						if (err) {
-							reject(err);
-						} else {
-							resolve(oService);
-						}
-					});
-				} else {
-					let cacheData = JSON.parse(data);
-					cacheData[_key] = __cacheData;
-					fs.writeFile(_path, JSON.stringify(cacheData), 'utf-8', (err) => {
-						if (err) {
-							reject(err);
-						} else {
-							resolve(oService);
-						}
-					});
-				}
-			});
-		});
-	}
+        return new Promise((resolve, reject) => {
+            fs.readFile(_path, 'utf-8', (err, data) => {
+                if (err) {
+                    let _oCache = {};
+                    _oCache[_key] = __cacheData;
+                    fs.writeFile(_path, JSON.stringify(_oCache), 'utf-8', (err) => {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve(oService);
+                        }
+                    });
+                } else {
+                    try{
+                        let cacheData = JSON.parse(data);
+                        cacheData[_key] = __cacheData;
+                        fs.writeFile(_path, JSON.stringify(cacheData), 'utf-8', (err) => {
+                            if (err) {
+                                reject(err);
+                            } else {
+                                resolve(oService);
+                            }
+                        });
+                    }catch(err){
+                        reject(err);
+                    }
+                }
+            });
+        });
+    }
 
 	__deleteService(oService) {
 
@@ -196,20 +200,6 @@ class ServiceConfig {
 
 	loadServiceData(oService) {
 		return  this.loader.loadServiceData(this.generatePath(oService), this.__generateKey(oService));
-		// return new Promise((resolve, reject) => {
-		// 	var _path = this.generatePath(oService);
-		// 	fs.readFile(_path, 'utf-8', (err, data) => {
-		// 		if (err) {
-		// 			console.error(err);
-		// 			reject(err);
-		// 		} else {
-		// 			let rootKey = this.__generateKey(oService);
-		// 			data = JSON.parse(data);
-		// 			resolve(data[rootKey]);
-		// 		}
-		// 	});
-
-		// });
 	}
 
 	__constructServiceObject(req) {

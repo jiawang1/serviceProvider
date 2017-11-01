@@ -21,14 +21,15 @@ const aProjects = [
 ];
 
 
-const solutionProjects = [
+const aSolutionProjects = [
 
-    'campus-studyplan-ui'
+    { key: '(campus-studyplan-ui)/(.*)', path:''}
 ];
 
 const schoolProject = '/labs-school/$1/src/$3/$2';
 const bootstrap = '/labs-school/$1/src/$2';
 const commonProject = '/labs-share/ui-shared-dist';
+const solutionProject = '/labs-solution';
 const snapshot = '/[^\/]/snapshot';
 
 
@@ -68,7 +69,6 @@ const handleServerConfigResource = (req, res, cb, urlPart)=> {
 
 exports.getSchoolRoutes = (rootPath)=>{
 
-
     const handleResource = (req, res, next, urlPart)=>{
 
         let matched = null,
@@ -77,19 +77,21 @@ exports.getSchoolRoutes = (rootPath)=>{
         if(aProjects.some((_url)=>((matched = urlPath.match(_url)) !==null ))){
 
             let __tmpPath =( matched[0].indexOf('school-ui-bootstrap')>=0?bootstrap:schoolProject).replace("$1",matched[1]).replace("$2", matched[2]);
-
             if(__tmpPath.indexOf('snapshot')>=0){
                 __tmpPath = __tmpPath.replace(/\/[^\/]*\/snapshot/, '');
             }else{
                 __tmpPath = __tmpPath.replace('$3',matched[0].slice(matched[0].lastIndexOf('.')+1) );
             }
-
             __path = path.join(rootPath,__tmpPath);
-        }else{
+
+        }else if ( aSolutionProjects.some((_cfg)=>((matched = urlPath.match(_cfg.key)) !==null ))  ){
+
+            __path = path.join(rootPath,solutionProject,matched[1], matched[2].replace(/(.*)snapshot\/(.*)/, '$1$2') );
+            
+        } else{
 
             /*
-             *  for ui-shared-dist content, some content is inside /ui-shared-dist,
-             *  but some others are not compiled, so located in labs-solution folder
+             *  for ui-shared-dist content
              * */
            
             let __aPathes = urlPath.split("/snapshot");
