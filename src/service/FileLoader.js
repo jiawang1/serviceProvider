@@ -45,7 +45,7 @@ exports.loadServiceData = (path, rootKey)=>{
 					reject(err);
 				} else {
 					data = JSON.parse(data);
-					resolve(data[rootKey]);
+					resolve(data[rootKey] || data["data"] );
 				}
 			});
 		});

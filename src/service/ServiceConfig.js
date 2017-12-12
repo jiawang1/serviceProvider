@@ -36,20 +36,27 @@ class ServiceConfig {
 		return new CacheStream(cacheFromStream);
 	}
 
-	__generateConfigFromRequest(req, res){
-		let oService = {};
-		oService.method = req.method.toLowerCase();
-		oService.headers = res.headers;
-		if (oService.method === constants.method.httpGet) {
-			let aUrl = req.url.split('?');
-			oService.url = aUrl[0];
-			oService.param = aUrl.length > 1 ? aUrl[1] : undefined;
-		} else {
-			oService.url = req.url;
-		}
-		oService.path = this.generatePath({ method: oService.method, path: req.url.replace(/^(.*)\?.*/, "$1").replace(/\//g, "_") });
-		return oService;
-	}
+    __generateConfigFromRequest(req, res){
+        let oService = {};
+        oService.method = req.method.toLowerCase();
+        oService.headers = (res && res.headers) || req.headers;
+
+        /*
+         *  supprot request in EF, for get method, just consider url part after ? as param,
+         *  for post , the param should be  url part after ? + bodydata in request
+         * */
+
+        let aUrl = req.url.split('?');
+        oService.url = aUrl[0];
+
+        if (oService.method === constants.method.httpGet) {
+            oService.param = aUrl.length > 1 ? decodeURIComponent(aUrl[1]) : undefined;
+        } else {
+            oService.param = aUrl.length > 1 ? decodeURIComponent( aUrl[1] + '_' + req.bodyData ): req.bodyData?decodeURIComponent(req.bodyData):undefined;
+        }
+        oService.path = this.generatePath({ method: oService.method, path: req.url.replace(/^(.*)\?.*/, "$1").replace(/\//g, "_") });
+        return oService;
+    }
 
 	__hasService(oService) {
 		return this.__findService(oService) >= 0;
@@ -57,11 +64,11 @@ class ServiceConfig {
 
 	__findService(oService) {
 		return this.serviceMap.findIndex(service => {
-			if (oService.method === 'get') {
+            //	if (oService.method === 'get') {
 				return service.url === oService.url && service.method === oService.method && service.param === oService.param;
-			} else {
-				return service.url === oService.url && service.method === oService.method;
-			}
+            //		} else {
+            //	return service.url === oService.url && service.method === oService.method;
+            ///}
 		});
 	}
 
@@ -103,7 +110,7 @@ class ServiceConfig {
 	}
 
 	__generateKey(oService) {
-		return (oService.method === "get" && oService.param && oService.param.length > 0) ? oService.param : "data";
+		return ( oService.param && oService.param.length > 0) ? oService.param : "data";
 	}
 	addService(oService) {
 
@@ -150,7 +157,7 @@ class ServiceConfig {
 		var _path = this.generatePath(oService);
 		return new Promise((resolve, reject) => {
 
-			if (oService.method === 'get' && oService.param && oService.param.length > 0) {
+			if ( oService.param && oService.param.length > 0) {
 
 				fs.readFile(_path, 'utf-8', (err, data) => {
 					if (err) {
@@ -202,28 +209,29 @@ class ServiceConfig {
 		return  this.loader.loadServiceData(this.generatePath(oService), this.__generateKey(oService));
 	}
 
-	__constructServiceObject(req) {
+	// __constructServiceObject(req) {
 
-		let oService = {};
-		oService.method = req.method.toLowerCase();
-		if (oService.method === 'get') {
-			// let _aUrl = req.url.split("?");
-			// oService.url = _aUrl[0];
-			// if (_aUrl[1] && _aUrl[1].length > 0) {
-			// 	oService.param = decodeURIComponent(_aUrl[1].replace(/\+/g, '%20'));
-			// }
-			oService.url = req.url;
-		} else {
-			oService.url = req.url;
-			oService.param = decodeURIComponent(req.bodyData.replace(/\+/g, '%20'));
-		}
-		oService.path = oService.url.replace(/\//g, "_");
-		return oService;
-	}
+	// 	let oService = {};
+	// 	oService.method = req.method.toLowerCase();
+	// 	if (oService.method === 'get') {
+	// 		// let _aUrl = req.url.split("?");
+	// 		// oService.url = _aUrl[0];
+	// 		// if (_aUrl[1] && _aUrl[1].length > 0) {
+	// 		// 	oService.param = decodeURIComponent(_aUrl[1].replace(/\+/g, '%20'));
+	// 		// }
+	// 		oService.url = req.url;
+	// 	} else {
+	// 		oService.url = req.url;
+	// 		oService.param = decodeURIComponent(req.bodyData.replace(/\+/g, '%20'));
+	// 	}
+	// 	oService.path = oService.url.replace(/\//g, "_");
+	// 	return oService;
+	// }
 
-	tryLoadLocalData(req, res) {
+ 	tryLoadLocalData(req, res) {
 
-		let oService = this.__constructServiceObject(req);
+// 		let oService = this.__constructServiceObject(req);
+        let oService = this.__generateConfigFromRequest(req);
 		return this.loadServiceData(oService).then(data => {
 			if (data.headers) {
 				res.writeHead(200, headers);
