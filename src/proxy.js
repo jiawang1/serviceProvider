@@ -321,7 +321,7 @@ function serverCb(req, res) {
   var __ignoreCache = _reqeustHeader['__ignore-cache__'];
 
   const _handleResponse = (hostRes, req, res) => {
-    return config.get('sync')
+    return config.get('sync')==='true'
       ? handleRemoteRes(
           hostRes,
           req,
@@ -456,7 +456,13 @@ const requestRemoteServer = remoteWrapper(config);
 // 	cert: fs.readFileSync(path.normalize(config.get("SSLCert")))
 // }, route);
 
-const server = http.createServer(route);
+//const server = http.createServer(route);
+//
+const server = https.createServer({
+    key: fs.readFileSync("./private.pem","utf-8"),
+ 	cert: fs.readFileSync("./file.crt","utf-8")
+},route);
+
 
 server.listen(config.get('port'));
 console.log(`Server is running at 127.0.0.1 , port ${config.get('port')}`);
