@@ -24,13 +24,18 @@ module.exports = {
 	bind
 };
 
-const __isType = (type)=>(oTarget)=>{
-	return Object.prototype.toString.call(target).replace(/^.*\s(.*)]$/, '$1') === type;
-};
+const __isType = type => oTarget =>
+  Object.prototype.toString.call(oTarget).replace(/^.*\s(.*)]$/, '$1') === type;
 
-var oType = module.exports;
-['String', 'Object', 'Number','Undefined','Function'].forEach((_type)=>{
-	oType[`is${_type}`] = __isType(_type);
+/**
+ * export functions:
+ *  isString
+ *  isObject
+ *  isNumber
+ *  isUndefined
+ *  isFunction
+ */
+const oType = module.exports;
+['String', 'Object', 'Number', 'Undefined', 'Function'].forEach(_type => {
+  oType[`is${_type}`] = __isType(_type);
 });
-
-
