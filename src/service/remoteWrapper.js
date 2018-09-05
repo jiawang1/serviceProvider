@@ -1,12 +1,12 @@
-'use strict';
-const http = require('http'),
-  https = require('https');
-const utils = require('../utils/utils');
+"use strict";
+const http = require("http"),
+  https = require("https");
+const utils = require("../utils/utils");
 
-const requestViaProxy = (fn => () => {
-  return utils.wrapToPromise(fn, null)(...[].slice.call(arguments));
+const requestViaProxy = (fn => (...args) => {
+  return utils.wrapToPromise(fn, null)(...args);
 })((proxyOp, target, cb) => {
-  var targetPort = ':' + (target.port || 443);
+  var targetPort = ":" + (target.port || 443);
   var headers = target.headers;
   headers.host = target.host + targetPort;
 
@@ -14,58 +14,58 @@ const requestViaProxy = (fn => () => {
     .request({
       hostname: proxyOp.host,
       port: proxyOp.port,
-      method: 'CONNECT',
+      method: "CONNECT",
       agent: false,
       path: target.host + targetPort, //"www3.lenovo.com:443"
-      headers: headers,
+      headers: headers
     })
-    .on('connect', (proxyRes, socket, head) => {
+    .on("connect", (proxyRes, socket, head) => {
       let ops = {
         socket: socket,
         agent: false,
         hostname: target.host,
         path: target.path,
-        method: target.method,
+        method: target.method
       };
 
       //TODO should take original header
 
-      target.auth && (ops.headers = {Authorization: target.auth});
+      target.auth && (ops.headers = { Authorization: target.auth });
       let proxyReq = https
         .request(ops, res => {
           cb.call(null, null, res);
         })
-        .on('error', err => {
+        .on("error", err => {
           reportError(err, cb);
         });
       target.bodyData && proxyReq.write(target.bodyData);
       proxyReq.end();
     })
-    .on('error', err => {
+    .on("error", err => {
       reportError(err, cb);
     })
     .end();
 
   function reportError(err, cb) {
-    console.error('error when connect to endpoint site via proxy');
+    console.error("error when connect to endpoint site via proxy");
     console.error(err);
     cb.call(null, err);
   }
 });
 
 const requestRemoteServer = config => (req, res) => {
-  var endServerHost = config.get('endpointServer.host'),
-    __ignoreCache = req.headers['__ignore-cache__'],
-    endServerPort = config.get('endpointServer.port'),
+  var endServerHost = config.get("endpointServer.host"),
+    __ignoreCache = req.headers["__ignore-cache__"],
+    endServerPort = config.get("endpointServer.port"),
     oAuth;
-  if (config.get('endpointServer.user')) {
+  if (config.get("endpointServer.user")) {
     oAuth =
-      'Basic ' +
+      "Basic " +
       new Buffer(
-        config.get('endpointServer.user') +
-          ':' +
-          config.get('endpointServer.password'),
-      ).toString('base64');
+        config.get("endpointServer.user") +
+          ":" +
+          config.get("endpointServer.password")
+      ).toString("base64");
   }
   /* 
 	* https via proxy, request via tunnel.
@@ -73,14 +73,14 @@ const requestRemoteServer = config => (req, res) => {
 	* tunnel to connect to end point server
 	*/
   if (config.isSSL() && config.hasProxy()) {
-    return requestViaProxy(config, {
+    return requestViaProxy(config.serverMap.proxy, {
       path: req.url,
       host: endServerHost,
       prot: endServerPort,
       method: req.method,
       auth: oAuth,
       headers: req.headers,
-      bodyData: req.bodyData,
+      bodyData: req.bodyData
     });
   } else {
     var __option = {};
@@ -90,7 +90,7 @@ const requestRemoteServer = config => (req, res) => {
     if (__option.headers.origin) {
       __option.headers.origin = __option.headers.origin.replace(
         /\/\/.*/,
-        `//${endServerHost}`,
+        `//${endServerHost}`
       );
     }
 
@@ -102,10 +102,10 @@ const requestRemoteServer = config => (req, res) => {
 
     oAuth && (__option.headers.Authorization = oAuth);
     if (config.hasProxy()) {
-      let oProxy = config.get('proxy');
+      let oProxy = config.get("proxy");
       __option.hostname = oProxy.host;
       __option.port = oProxy.port;
-      __option.path = config.get('endpointServer.address') + req.url;
+      __option.path = config.get("endpointServer.address") + req.url;
     } else {
       __option.hostname = __option.headers.host;
       endServerPort && (__option.port = endServerPort);
@@ -119,7 +119,7 @@ const requestRemoteServer = config => (req, res) => {
         host: endServerHost,
         port: endServerPort,
         path: req.url,
-        rejectUnauthorized: false,
+        rejectUnauthorized: false
       });
     }
 
@@ -133,20 +133,20 @@ const requestRemoteServer = config => (req, res) => {
         // 	resolve(hostRes);
         // }
 
-        if (hostRes.headers['set-cookie']) {
-          hostRes.headers['set-cookie'] = hostRes.headers['set-cookie'].map(
+        if (hostRes.headers["set-cookie"]) {
+          hostRes.headers["set-cookie"] = hostRes.headers["set-cookie"].map(
             cookie => {
-              return cookie.replace(/(domain=)(.*)(;)/, '$1localhost$3');
-            },
+              return cookie.replace(/(domain=)(.*)(;)/, "$1localhost$3");
+            }
           );
         }
         resolve(hostRes);
       });
-      __req.on('error', e => {
+      __req.on("error", e => {
         reject(e);
       });
       __req.setTimeout(100000, () => {
-        reject(new Error('request has timeout : 10000'));
+        reject(new Error("request has timeout : 10000"));
       });
       req.bodyData && __req.write(req.bodyData); // post request body
       if (req.bodyData) {
