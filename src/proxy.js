@@ -8,57 +8,33 @@ const http = require("http"),
   PouchDB = require("pouchdb"),
   Cache = require("./service/ProxyCache"),
   View = require("./view/View"),
-  zlib = require("zlib"),
   utils = require("./utils/utils"),
   ServerConfig = require("./service/ServerConfig"),
   constructRoute = require("./view/route"),
   remoteWrapper = require("./service/remoteWrapper"),
   router = require("./view/ResourceRouter.js"),
+  getHomeRoutes = require("./route/homeRoute"),
+  getDWRRoutes = require('./route/dwrRoute'),
   constants = require("./utils/constants.js");
 
 /*
  * this function used to handle request for server consiguration page
  * so the path is ../public
   */
-function handleStatic(req, res, cb, urlPart) {
+function handleStatic(req, res) {
   let url = req.url;
   let _path = path.join("..", url);
-  sendFile(_path, res);
+  utils.sendFile(_path, res);
 }
 
-function handleResource(req, res, cb, urlPart) {
+function handleResource(req, res, urlPart) {
   let matched = req.url.match(urlPart)[0];
   let _path = path.normalize(config.get("rootPath") + matched);
-  sendFile(_path, res);
-}
-
-function sendFile(_path, res) {
-  let ext = path
-    .extname(_path)
-    .toLowerCase()
-    .replace(".", "");
-  let mime = constants.MIME[ext] || constants.MIME["text"];
-  let fileRaw = fs.createReadStream(_path);
-
-  fileRaw
-    .on("open", () => {
-      res.writeHead(200, {
-        "Cache-Control": "no-cache",
-        "Content-Type": mime,
-        "content-encoding": "gzip"
-      });
-    })
-    .on("error", err => {
-      console.error(err);
-      res.statusCode = 404;
-      res.statusMessage = "file not found by proxy";
-      res.end(res.statusMessage);
-    });
-  fileRaw.pipe(zlib.createGzip()).pipe(res);
+  utils.sendFile(_path, res);
 }
 
 const handleViewModel = viewName => {
-  let _path = path.join("../public", viewName + ".ejs");
+  let _path = path.join("../__public", viewName + ".ejs");
   let model = {};
   switch (viewName) {
     case "config":
@@ -85,7 +61,7 @@ const handleViewModel = viewName => {
 /**
  *  used to handle service configuraiton
  * */
-function handleServerConfiguration(req, res, cb, urlPart) {
+function handleServerConfiguration(req, res, urlPart) {
   let aMathed = req.url
     .match(urlPart)[1]
     .trim()
@@ -254,6 +230,8 @@ function handleServerConfiguration(req, res, cb, urlPart) {
         this.method = pair.val.toLowerCase();
       } else if (pair.key === "serviceParam") {
         this.param = pair.val.length > 0 ? pair.val : undefined;
+      }else if (pair.key === 'header'){
+        this.headers = pair.val;
       }
     }
   }
@@ -397,7 +375,7 @@ function serverCb(req, res) {
   }
 }
 
-function preHandle(req, res, cb) {
+function preHandle(req, res, pattern, cb) {
   if (req.url === "/favicon.ico") {
     res.end("");
     return;
@@ -455,9 +433,10 @@ const aRoutes = [
     target: new RegExp("/__server_config__(.*)"),
     cb: handleServerConfiguration
   },
+  ...getDWRRoutes(config),
   { target: new RegExp(config.get("resourceRoute")), cb: handleResource },
-  router.getSchoolRoutes(config.get("rootPath")),
-  { target: new RegExp("/public/"), cb: handleStatic },
+  { target: new RegExp("/__public/"), cb: handleStatic },
+  ...getHomeRoutes(config),
   { target: new RegExp(".*"), cb: serverCb }
 ];
 const route = constructRoute(aRoutes);
@@ -468,15 +447,15 @@ const requestRemoteServer = remoteWrapper(config);
 // 	cert: fs.readFileSync(path.normalize(config.get("SSLCert")))
 // }, route);
 
-// const server = http.createServer(route);
+const server = http.createServer(route);
 //
-const server = https.createServer(
-  {
-    key: fs.readFileSync("/Users/i054410/Documents/work/ssl/key.pem", "utf-8"),
-    cert: fs.readFileSync("/Users/i054410/Documents/work/ssl/cert.pem", "utf-8")
-  },
-  route
-);
+// const server = https.createServer(
+//   {
+//     key: fs.readFileSync("/Users/i054410/Documents/work/ssl/key.pem", "utf-8"),
+//     cert: fs.readFileSync("/Users/i054410/Documents/work/ssl/cert.pem", "utf-8")
+//   },
+//   route
+// );
 
 server.listen(config.get("port"));
 console.log(`Server is running at 127.0.0.1 , port ${config.get("port")}`);

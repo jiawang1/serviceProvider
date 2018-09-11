@@ -20,7 +20,8 @@
 			var serviceUrl = $("#service-url").val();
 			var serviceData = $("#service-data").val();
 			var serviceMethod = $("#service-method").val();
-			var serviceParam = $("#service-param").val();
+      var serviceParam = $("#service-param").val();
+      var header = $("#header").val();
 
 			if(serviceUrl.length === 0 ||serviceMethod.length === 0 ){
 				return false;
@@ -32,8 +33,8 @@
 					serviceUrl: serviceUrl,
 					serviceData:serviceData,
 					serviceMethod:serviceMethod,
-					serviceParam:serviceParam
-
+          serviceParam:serviceParam,
+          header:header
 				},
 				function(data){
 					if(data && data !=="no_change"){
@@ -55,11 +56,11 @@
 				serviceUrl: $targetTd.siblings(".service-url").text().trim(),
 				serviceMethod: $targetTd.siblings(".service-method").text().trim(),
 				serviceParam:  $targetTd.siblings(".service-param").text().trim(),
-			}, 
+			},
 			function(data){
 				if(data && data.url){
 					$targetTd.parent().remove();
-				}			
+				}
 			});
 		});
 
@@ -69,8 +70,8 @@
 
 			var param =	 $targetTd.siblings(".service-param").text().trim(),
 				url = $targetTd.siblings(".service-url").text().trim();
-			
-			var setting = {	
+
+			var setting = {
 					dataType: 'json',
 					type: methodName,
 					headers:{
@@ -91,14 +92,14 @@
 				if(methodName === 'get'){
 					(param.length > 0)&& (url = `${url}?${param}`);
 				}else{
-					(param.length > 0) && (setting.data = param);	
+					(param.length > 0) && (setting.data = param);
 					setting.contentType = 'application/json';
 				}
 
 				setting.url = url;
-				
+
 			$.ajax(setting);
-			
+
 		});
 
 		$("table").on("click",".edit", function(e){
@@ -113,7 +114,7 @@
 					$("#service-url").val(oData.url);
 					$('#service-data').val(oData.data);
 					$('#service-param').val(oData.param)
-				}			
+				}
 			});
 		});
 	});

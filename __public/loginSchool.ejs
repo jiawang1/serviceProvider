@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
-        
+
     </head>
     <body>
         <div id="logindiv">
@@ -23,7 +23,7 @@
                 </div>
             </form>
             <span  id="response" ></span>
-            <script type="application/javascript" src="/public/jquery-1.11.1.min.js"></script>
+            <script type="application/javascript" src="/__public/jquery-1.11.1.min.js"></script>
             <script type="application/javascript" >
                 function login (e){
                     e.preventDefault();
@@ -34,7 +34,7 @@
                     }
                         $.post("/login/secure.ashx",  $("#login-form").serialize(), function(){
                         $("#response").text("success")
-                    });               
+                    });
                 }
             </script>
 

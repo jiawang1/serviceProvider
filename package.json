@@ -8,6 +8,7 @@
   },
   "scripts": {
     "start": "node src/proxy.js",
+    "debug":"node --inspect-brk src/proxy.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
@@ -20,6 +21,9 @@
   "author": "Jia Wang",
   "license": "MIT",
   "devDependencies": {
-    "chai": "^3.5.0"
+    "chai": "^3.5.0",
+    "eslint": "^5.5.0",
+    "eslint-config-airbnb": "^17.1.0",
+    "prettier": "^1.14.2"
   }
 }

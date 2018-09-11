@@ -4,13 +4,13 @@
         target:  regexp for url
         cb: handler callback
     }
-* 
+*
 */
 const wrapRoute = (obj, next)=>{
 
     return function(req,res){
         if(obj.target.test(req.url)){
-            obj.cb(req,res, next, obj.target);
+            obj.cb(req,res, obj.target,next);
         }else{
             next(req,res);
         }

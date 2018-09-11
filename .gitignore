@@ -42,3 +42,5 @@ proxyCache.json
 **/src/fivestar/**
 **/src/_config*/**
 proxyCache.json
+
+**/.DS_Store

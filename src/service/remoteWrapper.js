@@ -54,7 +54,7 @@ const requestViaProxy = (fn => (...args) => {
 });
 
 const requestRemoteServer = config => (req, res) => {
-  var endServerHost = config.get("endpointServer.host"),
+  var endServerHost = config.get("endpointServer.host") ,
     __ignoreCache = req.headers["__ignore-cache__"],
     endServerPort = config.get("endpointServer.port"),
     oAuth;
@@ -67,7 +67,7 @@ const requestRemoteServer = config => (req, res) => {
           config.get("endpointServer.password")
       ).toString("base64");
   }
-  /* 
+  /*
 	* https via proxy, request via tunnel.
 	* this kind of request have to create socket to proxy first, the use this as
 	* tunnel to connect to end point server
@@ -95,7 +95,7 @@ const requestRemoteServer = config => (req, res) => {
     }
 
     /*
-         *  some site will set cookie to stick to specific domain, will check whether 
+         *  some site will set cookie to stick to specific domain, will check whether
          *  refer will be the same with host
          * */
     delete __option.headers.referer;
