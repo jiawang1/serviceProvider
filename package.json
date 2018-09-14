@@ -2,13 +2,13 @@
   "name": "h-proxy",
   "version": "1.0.1",
   "description": "proxy tool",
-  "main": "proxy.js",
+  "main": "src/index.js",
   "config": {
     "port": 8079
   },
   "scripts": {
-    "start": "node src/proxy.js",
-    "debug":"node --inspect-brk src/proxy.js",
+    "start": "node --experimental-modules src/index.js",
+    "debug":"node --inspect-brk src/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {

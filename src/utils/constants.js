@@ -16,8 +16,8 @@ const defineConst = obj => {
 };
 
 defineConst({
-  SERVICE_CONFIG: "./_config/serviceConfig.json",
-  SERVER_CONFIG: "./_config/serverConfig.json",
+  SERVICE_CONFIG: "./src/_config/serviceConfig.json",
+  SERVER_CONFIG: "./src/_config/serverConfig.json",
   MIME: {
     js: "application/javascript",
     json: "application/json",

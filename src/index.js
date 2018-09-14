@@ -6,15 +6,15 @@ const http = require("http"),
   path = require("path"),
   fs = require("fs"),
   PouchDB = require("pouchdb"),
-  Cache = require("./service/ProxyCache"),
-  View = require("./view/View"),
-  utils = require("./utils/utils"),
-  ServerConfig = require("./service/ServerConfig"),
-  constructRoute = require("./view/route"),
-  remoteWrapper = require("./service/remoteWrapper"),
+  Cache = require("./service/ProxyCache.js"),
+  View = require("./view/View.js"),
+  utils = require("./utils/utils.js"),
+  ServerConfig = require("./service/ServerConfig.js"),
+  constructRoute = require("./view/route.js"),
+  remoteWrapper = require("./service/remoteWrapper.js"),
   router = require("./view/ResourceRouter.js"),
-  getHomeRoutes = require("./route/homeRoute"),
-  getDWRRoutes = require('./route/dwrRoute'),
+  getHomeRoutes = require("./route/homeRoute.js"),
+  getDWRRoutes = require('./route/dwrRoute.js'),
   constants = require("./utils/constants.js");
 
 /*
@@ -34,7 +34,7 @@ function handleResource(req, res, urlPart) {
 }
 
 const handleViewModel = viewName => {
-  let _path = path.join("../__public", viewName + ".ejs");
+  let _path = path.join("./__public", viewName + ".ejs");
   let model = {};
   switch (viewName) {
     case "config":
