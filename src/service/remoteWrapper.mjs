@@ -1,7 +1,7 @@
-"use strict";
-const http = require("http"),
-  https = require("https");
-const utils = require("../utils/utils");
+
+import http from 'http';
+import https from 'https';
+import utils from '../utils/utils';
 
 const requestViaProxy = (fn => (...args) => {
   return utils.wrapToPromise(fn, null)(...args);
@@ -158,4 +158,4 @@ const requestRemoteServer = config => (req, res) => {
   }
 };
 
-module.exports = requestRemoteServer;
+export default requestRemoteServer;

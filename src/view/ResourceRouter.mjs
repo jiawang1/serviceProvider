@@ -1,4 +1,4 @@
-"use strict";
+
 
 /**
  *  login page  http://localhost:8079/__server_config__/view/loginSchool
@@ -6,11 +6,10 @@
  *  entry for school :http://localhost:8079/_shared/school-ui-bootstrap/index_e13.html
  *
  */
-
-const path = require("path"),
-  constants = require("../utils/constants.js"),
-  fs = require("fs"),
-  zlib = require("zlib");
+import path from 'path';
+import fs from 'fs';
+import zlib from 'zlib';
+import constants from '../utils/constants';
 
 const aProjects = [
   "(school-ui-activity)/(.*)",
@@ -71,7 +70,7 @@ const handleServerConfigResource = (req, res, cb, urlPart) => {
   sendFile(_path, res);
 };
 
-exports.getSchoolRoutes = rootPath => {
+ const getSchoolRoutes = rootPath => {
   const handleResource = (req, res, next, urlPart) => {
     let matched = null,
       __path = null;
@@ -146,3 +145,5 @@ exports.getSchoolRoutes = rootPath => {
 
   return { target: new RegExp("/_shared/(.*)"), cb: handleResource };
 };
+
+export default getSchoolRoutes;

@@ -1,21 +1,18 @@
-"use strict";
-
-const http = require("http"),
-  https = require("https"),
-  ServiceConfig = require("./service/ServiceConfig.js"),
-  path = require("path"),
-  fs = require("fs"),
-  PouchDB = require("pouchdb"),
-  Cache = require("./service/ProxyCache.js"),
-  View = require("./view/View.js"),
-  utils = require("./utils/utils.js"),
-  ServerConfig = require("./service/ServerConfig.js"),
-  constructRoute = require("./view/route.js"),
-  remoteWrapper = require("./service/remoteWrapper.js"),
-  router = require("./view/ResourceRouter.js"),
-  getHomeRoutes = require("./route/homeRoute.js"),
-  getDWRRoutes = require('./route/dwrRoute.js'),
-  constants = require("./utils/constants.js");
+import http from 'http';
+import https from 'https';
+import path from 'path';
+import fs from 'fs';
+import ServiceConfig from './service/ServiceConfig';
+import Cache from './service/ProxyCache';
+import View from './view/View';
+import utils from './utils/utils';
+import ServerConfig from './service/ServerConfig';
+import constructRoute from './view/route';
+import remoteWrapper from './service/remoteWrapper.mjs';
+import router from './view/ResourceRouter';
+import getHomeRoutes from './route/homeRoute';
+import getDWRRoutes from './route/dwrRoute';
+import constants from './utils/constants';
 
 /*
  * this function used to handle request for server consiguration page
@@ -427,7 +424,7 @@ const aRoutes = [
   { target: new RegExp(".*"), cb: preHandle },
   {
     target: new RegExp("_service_persistent"),
-    cb: utils.bind(oCache.handlePersistence, oCache)
+    cb: oCache.handlePersistence
   },
   {
     target: new RegExp("/__server_config__(.*)"),

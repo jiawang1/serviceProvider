@@ -2,18 +2,17 @@
   "name": "h-proxy",
   "version": "1.0.1",
   "description": "proxy tool",
-  "main": "src/index.js",
+  "main": "src/index.mjs",
   "config": {
     "port": 8079
   },
   "scripts": {
-    "start": "node --experimental-modules src/index.js",
-    "debug":"node --inspect-brk src/index.js",
+    "start": "node --experimental-modules src/index.mjs",
+    "debug": "node --inspect-brk src/index.mjs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "ejs": "^2.4.2",
-    "pouchdb": "^6.1.2"
+    "ejs": "^2.4.2"
   },
   "keywords": [
     "proxy"

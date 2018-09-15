@@ -1,4 +1,3 @@
-'user strict';
 
 const getRoutes = config => {
   return [
@@ -22,4 +21,4 @@ const getRoutes = config => {
   ];
 };
 
-module.exports = getRoutes;
+export default getRoutes;

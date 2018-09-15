@@ -1,6 +1,6 @@
-'user strict';
-const path = require("path");
-const utils = require("../utils/utils");
+
+import path from 'path';
+import utils from '../utils/utils';
 
 const getRoutes = config => {
   const ROOT = config.get("rootPath");
@@ -30,4 +30,4 @@ const getRoutes = config => {
   ];
 };
 
-module.exports = getRoutes;
+export default getRoutes;

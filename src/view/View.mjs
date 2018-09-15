@@ -1,6 +1,6 @@
- const ejs = require("ejs")
-      ,zlib = require('zlib');
 
+import ejs from 'ejs';
+import zlib from 'zlib';
 
  class View{
 
@@ -17,7 +17,7 @@
 				 console.error(err.message);
 				 res.writeHead("500","render error");
 				 res.end();
-				 return;	
+				 return;
 			 }
 			 zlib.gzip(new Buffer(str), (err, buffer)=>{
 				 if(!err){
@@ -30,10 +30,10 @@
 					 console.error(err.message);
 					 res.writeHead("500","compress error");
 				 }
-				 res.end();			
+				 res.end();
 			 });
-         }	
+         }
      }
  }
 
- module.exports = View;
+export default View;

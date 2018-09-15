@@ -1,4 +1,4 @@
-const Pouch = require('pouchdb');
+// const Pouch = require('pouchdb');
 
 var db = null;
 

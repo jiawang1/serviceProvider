@@ -1,7 +1,7 @@
-const fs = require('fs');
-const path = require('path');
-const constants = require('./constants');
-const zlib = require("zlib");
+import fs from "fs";
+import path from "path";
+import zlib from "zlib";
+import constants from "./constants";
 
 const wrapToPromise = (fn, context) => (...args) => {
   return new Promise((resolve, reject) => {
@@ -22,9 +22,7 @@ const bind = (fn, context) => {
 };
 
 const sendFile = (filePath, res) => {
-  const ext = path
-    .extname(filePath)
-    .toLowerCase();
+  const ext = path.extname(filePath).toLowerCase();
   const mime = constants.MIME[ext] || constants.MIME["text"];
   const fileRaw = fs.createReadStream(filePath);
 
@@ -45,7 +43,7 @@ const sendFile = (filePath, res) => {
   fileRaw.pipe(zlib.createGzip()).pipe(res);
 };
 
-module.exports = {
+const utils = {
   sendFile,
   wrapToPromise,
   bind
@@ -62,7 +60,9 @@ const __isType = type => oTarget =>
  *  isUndefined
  *  isFunction
  */
-const oType = module.exports;
+const oType = utils;
 ["String", "Object", "Number", "Undefined", "Function"].forEach(_type => {
   oType[`is${_type}`] = __isType(_type);
 });
+
+export default utils;

@@ -7,7 +7,6 @@
 *
 */
 const wrapRoute = (obj, next)=>{
-
     return function(req,res){
         if(obj.target.test(req.url)){
             obj.cb(req,res, obj.target,next);
@@ -25,4 +24,4 @@ const constructRoute = (aConfig)=>(req, res)=>{
     composeRoute(...aConfig)(req,res);
 };
 
-module.exports = constructRoute;
+export default constructRoute;

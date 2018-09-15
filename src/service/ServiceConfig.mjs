@@ -1,9 +1,7 @@
-"use strict";
-
-const path = require("path"),
-  constants = require("../utils/constants.js"),
-  CacheStream = require("../utils/CacheBranchStream"),
-  fs = require("fs");
+import path from 'path';
+import fs from 'fs';
+import constants from '../utils/constants';
+import CacheStream from '../utils/CacheBranchStream';
 
 class ServiceConfig {
   constructor(config) {
@@ -270,4 +268,4 @@ class ServiceConfig {
   }
 }
 
-module.exports = ServiceConfig;
+export default ServiceConfig;
