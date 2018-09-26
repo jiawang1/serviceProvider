@@ -1,7 +1,7 @@
-import path from 'path';
-import fs from 'fs';
-import constants from '../utils/constants';
-import CacheStream from '../utils/CacheBranchStream';
+import path from "path";
+import fs from "fs";
+import constants from "../utils/constants";
+import CacheStream from "../utils/CacheBranchStream";
 
 class ServiceConfig {
   constructor(config) {
@@ -254,7 +254,10 @@ class ServiceConfig {
     let oService = this.__generateConfigFromRequest(req);
     return this.loadServiceData(oService).then(data => {
       if (data.headers) {
-        const headers = (typeof data.headers === 'string')?JSON.parse(data.headers):data.headers;
+        const headers =
+          typeof data.headers === "string"
+            ? JSON.parse(data.headers)
+            : data.headers;
         res.writeHead(200, headers);
       } else {
         res.writeHead(200, {

@@ -8,7 +8,7 @@ import View from './view/View';
 import utils from './utils/utils';
 import ServerConfig from './service/ServerConfig';
 import constructRoute from './view/route';
-import remoteWrapper from './service/remoteWrapper.mjs';
+import remoteWrapper from './service/remoteWrapper';
 import router from './view/ResourceRouter';
 import getHomeRoutes from './route/homeRoute';
 import getDWRRoutes from './route/dwrRoute';
@@ -20,7 +20,7 @@ import constants from './utils/constants';
   */
 function handleStatic(req, res) {
   let url = req.url;
-  let _path = path.join("..", url);
+  let _path = path.join('.', url);
   utils.sendFile(_path, res);
 }
 
@@ -296,6 +296,7 @@ function handleRemoteRes(hostRes, req, res, cacheHandler) {
 }
 
 function serverCb(req, res) {
+  debugger;
   var _reqeustHeader = req.headers;
   var __ignoreCache = _reqeustHeader["__ignore-cache__"];
 
