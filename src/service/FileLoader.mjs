@@ -1,10 +1,10 @@
-const fs = require("fs"),
-  path = require("path"),
-  constants = require("../utils/constants");
+import fs from "fs";
+import path from "path";
+import constants from "../utils/constants";
 
 const loadFileSync = filepath => {};
 
-exports.loadServerConfig = () => {
+const loadServerConfig = () => {
   try {
     fs.statSync(constants.SERVER_CONFIG);
     var __config = fs.readFileSync(constants.SERVER_CONFIG, "utf-8");
@@ -20,7 +20,7 @@ exports.loadServerConfig = () => {
   }
 };
 
-exports.loadServiceMap = () => {
+const loadServiceMap = () => {
   try {
     var _file = fs.readFileSync(constants.SERVICE_CONFIG);
     return _file.length > 0 ? JSON.parse(_file) : [];
@@ -31,12 +31,12 @@ exports.loadServiceMap = () => {
       }, will create new empty file`
     );
     console.error(e.message || e);
-    fs.writeFile(constants.SERVICE_CONFIG, "",()=>{});
+    fs.writeFile(constants.SERVICE_CONFIG, "", () => {});
     return [];
   }
 };
 
-exports.loadServiceData = (path, rootKey) => {
+const loadServiceData = (path, rootKey) => {
   return new Promise((resolve, reject) => {
     fs.readFile(path, "utf-8", (err, data) => {
       if (err) {
@@ -49,3 +49,5 @@ exports.loadServiceData = (path, rootKey) => {
     });
   });
 };
+
+export default { loadServerConfig, loadServiceData, loadServiceMap };

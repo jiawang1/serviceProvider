@@ -1,6 +1,8 @@
-const constants = require("../utils/constants"),
-  path = require("path"),
-  fs = require("fs");
+// const PouchDB = require("pouchdb"),
+import path from 'path';
+import fs from 'fs';
+import constants from '../utils/constants';
+
 
 class Cache {
   constructor(config) {
@@ -13,6 +15,8 @@ class Cache {
     } catch (e) {
       this.cache = {};
     }
+    this.tryLoadLocalData = this.tryLoadLocalData.bind(this);
+    this.handlePersistence = this.handlePersistence.bind(this);
   }
   tryLoadLocalData(req, res) {
     return new Promise((resolve, reject) => {
@@ -48,4 +52,4 @@ class Cache {
   }
 }
 
-module.exports = Cache;
+export default Cache;

@@ -1,21 +1,18 @@
-"use strict";
-
-const http = require("http"),
-  https = require("https"),
-  ServiceConfig = require("./service/ServiceConfig.js"),
-  path = require("path"),
-  fs = require("fs"),
-
-  Cache = require("./service/ProxyCache"),
-  View = require("./view/View"),
-  utils = require("./utils/utils"),
-  ServerConfig = require("./service/ServerConfig"),
-  constructRoute = require("./view/route"),
-  remoteWrapper = require("./service/remoteWrapper"),
-  router = require("./view/ResourceRouter.js"),
-  getHomeRoutes = require("./route/homeRoute"),
-  getDWRRoutes = require('./route/dwrRoute'),
-  constants = require("./utils/constants.js");
+import http from 'http';
+import https from 'https';
+import path from 'path';
+import fs from 'fs';
+import ServiceConfig from './service/ServiceConfig';
+import Cache from './service/ProxyCache';
+import View from './view/View';
+import utils from './utils/utils';
+import ServerConfig from './service/ServerConfig';
+import constructRoute from './view/route';
+import remoteWrapper from './service/remoteWrapper';
+import router from './view/ResourceRouter';
+import getHomeRoutes from './route/homeRoute';
+import getDWRRoutes from './route/dwrRoute';
+import constants from './utils/constants';
 
 /*
  * this function used to handle request for server consiguration page
@@ -23,7 +20,7 @@ const http = require("http"),
   */
 function handleStatic(req, res) {
   let url = req.url;
-  let _path = path.join("..", url);
+  let _path = path.join('.', url);
   utils.sendFile(_path, res);
 }
 
@@ -34,7 +31,7 @@ function handleResource(req, res, urlPart) {
 }
 
 const handleViewModel = viewName => {
-  let _path = path.join("../__public", viewName + ".ejs");
+  let _path = path.join("./__public", viewName + ".ejs");
   let model = {};
   switch (viewName) {
     case "config":
@@ -299,6 +296,7 @@ function handleRemoteRes(hostRes, req, res, cacheHandler) {
 }
 
 function serverCb(req, res) {
+  debugger;
   var _reqeustHeader = req.headers;
   var __ignoreCache = _reqeustHeader["__ignore-cache__"];
 
@@ -427,7 +425,7 @@ const aRoutes = [
   { target: new RegExp(".*"), cb: preHandle },
   {
     target: new RegExp("_service_persistent"),
-    cb: utils.bind(oCache.handlePersistence, oCache)
+    cb: oCache.handlePersistence
   },
   {
     target: new RegExp("/__server_config__(.*)"),

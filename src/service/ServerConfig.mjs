@@ -1,7 +1,9 @@
-const fs = require("fs"),
-  fileLoader = require("./FileLoader"),
-  dbLoader = require("./DBLoader"),
-  constants = require("../utils/constants");
+// const PouchDB = require("pouchdb"),
+
+import fs from 'fs';
+import fileLoader from "./FileLoader";
+import dbLoader from "./DBLoader";
+import constants from "../utils/constants";
 
 class ServerConfig {
   static getDefault() {
@@ -161,7 +163,7 @@ class ServerConfig {
       } catch (e) {
         fs.mkdirSync("./_config");
       }
-      fs.writeFile(constants.SERVER_CONFIG, "", ()=>{});
+      fs.writeFile(constants.SERVER_CONFIG, "", () => {});
       return {};
     }
   }
@@ -183,8 +185,8 @@ class ServerConfig {
       this.loadConfigFile(),
       this.__loadEnvironmentConfig()
     );
-    // this.serverMap["toDatabase"] &&
-    //   this.__initDB(this.serverMap["databaseName"]);
+    this.serverMap["toDatabase"] &&
+      this.__initDB(this.serverMap["databaseName"]);
   }
 }
 
@@ -200,4 +202,4 @@ function assignValue(key, val, oo) {
   });
 }
 
-module.exports = ServerConfig;
+export default ServerConfig;
