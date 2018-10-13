@@ -59,6 +59,7 @@ const handleViewModel = viewName => {
  *  used to handle service configuraiton
  * */
 function handleServerConfiguration(req, res, urlPart) {
+  debugger;
   let aMathed = req.url
     .match(urlPart)[1]
     .trim()

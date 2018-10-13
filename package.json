@@ -8,7 +8,7 @@
   },
   "scripts": {
     "start": "node --experimental-modules src/index.mjs",
-    "debug": "node --inspect --experimental-modules src/index.mjs",
+    "debug": "node --inspect-brk --experimental-modules src/index.mjs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
