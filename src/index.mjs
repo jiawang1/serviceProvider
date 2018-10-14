@@ -12,6 +12,7 @@ import remoteWrapper from './service/remoteWrapper';
 import router from './view/ResourceRouter';
 import getHomeRoutes from './route/homeRoute';
 import getDWRRoutes from './route/dwrRoute';
+import getPreRoutes from './route/preRoute';
 import constants from './utils/constants';
 
 /*
@@ -19,22 +20,22 @@ import constants from './utils/constants';
  * so the path is ../public
   */
 function handleStatic(req, res) {
-  let url = req.url;
-  let _path = path.join('.', url);
+  const { url } = req;
+  const _path = path.join('.', url);
   utils.sendFile(_path, res);
 }
 
 function handleResource(req, res, urlPart) {
-  let matched = req.url.match(urlPart)[0];
-  let _path = path.normalize(config.get("rootPath") + matched);
+  const matched = req.url.match(urlPart)[0];
+  const _path = path.normalize(config.get('rootPath') + matched);
   utils.sendFile(_path, res);
 }
 
 const handleViewModel = viewName => {
-  let _path = path.join("./__public", viewName + ".ejs");
+  let _path = path.join('./__public', viewName + '.ejs');
   let model = {};
   switch (viewName) {
-    case "config":
+    case 'config':
       ServerConfig.fields.forEach(field => {
         model[field] = config.get(field);
       });
@@ -63,21 +64,21 @@ function handleServerConfiguration(req, res, urlPart) {
   let aMathed = req.url
     .match(urlPart)[1]
     .trim()
-    .split("?");
+    .split('?');
   let matched = aMathed[0];
-  if (matched.indexOf("/view") === 0) {
-    let viewName = matched.slice(1).split("/")[1] || "config";
+  if (matched.indexOf('/view') === 0) {
+    let viewName = matched.slice(1).split('/')[1] || 'config';
     let viewModel = handleViewModel(viewName);
     oView.render(viewModel.path, viewModel.model, req, res);
   } else {
     // handle action from configuration page
     let oService = {};
-    if (req.bodyData && typeof req.bodyData !== "string") {
-      req.bodyData = req.bodyData.toString("utf-8");
+    if (req.bodyData && typeof req.bodyData !== 'string') {
+      req.bodyData = req.bodyData.toString('utf-8');
     }
 
     switch (matched) {
-      case "/save_server_config":
+      case '/save_server_config':
         extractParam(req.bodyData).map(pair => {
           config.set(pair.key, pair.val);
         });
@@ -85,28 +86,25 @@ function handleServerConfiguration(req, res, urlPart) {
           .save()
           .then(() => {
             res.writeHead(200, {
-              "Content-Type": constants.MIME.json
+              'Content-Type': constants.MIME.json
             });
-            res.end(JSON.stringify({ status: "sucess" }));
+            res.end(JSON.stringify({ status: 'sucess' }));
           })
           .catch(err => {
             res.writeHead(200, {
-              "Content-Type": constants.MIME.json
+              'Content-Type': constants.MIME.json
             });
-            res.end(JSON.stringify({ status: "sucess", content: err.message }));
+            res.end(JSON.stringify({ status: 'sucess', content: err.message }));
           });
         break;
 
-      case "/save_service_config":
+      case '/save_service_config':
         extractParam(req.bodyData).map(utils.bind(mapParam, oService));
         if (oService.data) {
-          Promise.all([
-            serviceConfig.addServiceURL(oService),
-            serviceConfig.addService(oService)
-          ])
+          Promise.all([serviceConfig.addServiceURL(oService), serviceConfig.addService(oService)])
             .then(args => {
               res.writeHead(200, {
-                "Content-Type": constants.MIME.json
+                'Content-Type': constants.MIME.json
               });
               res.end(JSON.stringify(args[0]));
             })
@@ -120,7 +118,7 @@ function handleServerConfiguration(req, res, urlPart) {
             .addServiceURL(oService)
             .then(args => {
               res.writeHead(200, {
-                "Content-Type": constants.MIME.json
+                'Content-Type': constants.MIME.json
               });
               res.end(JSON.stringify(args));
             })
@@ -131,13 +129,13 @@ function handleServerConfiguration(req, res, urlPart) {
             });
         }
         break;
-      case "/delete_service_config":
+      case '/delete_service_config':
         extractParam(req.bodyData).map(utils.bind(mapParam, oService));
         serviceConfig
           .deleteService(oService)
           .then(data => {
             res.writeHead(200, {
-              "Content-Type": constants.MIME.json
+              'Content-Type': constants.MIME.json
             });
             res.end(JSON.stringify({ url: data }));
           })
@@ -147,26 +145,26 @@ function handleServerConfiguration(req, res, urlPart) {
             res.end(res.statusMessage);
           });
         break;
-      case "/load_service":
+      case '/load_service':
         extractParam(aMathed[1]).map(utils.bind(mapParam, oService));
         serviceConfig
           .loadServiceData(oService)
           .then(data => {
             res.writeHead(200, {
-              "Content-Type": constants.MIME.json
+              'Content-Type': constants.MIME.json
             });
             oService.data = data.body || data;
             res.end(JSON.stringify(oService));
           })
           .catch(err => {
             res.writeHead(200, {
-              "Content-Type": constants.MIME.json
+              'Content-Type': constants.MIME.json
             });
-            oService.data = "no-data";
+            oService.data = 'no-data';
             res.end(JSON.stringify(oService));
           });
         break;
-      case "/sync_all":
+      case '/sync_all':
         var count = serviceConfig.getServiceList().length,
           aSuccessResults = [],
           aFailedResults = [];
@@ -198,9 +196,9 @@ function handleServerConfiguration(req, res, urlPart) {
       return serviceConfig.getServiceList().map(oService => {
         var oRequestDuck = {
           headers: {
-            "content-type": "application/json",
-            accept: "application/json",
-            "__ignore-cache__": true
+            'content-type': 'application/json',
+            accept: 'application/json',
+            '__ignore-cache__': true
           },
           url: oService.url,
           method: oService.method
@@ -217,29 +215,29 @@ function handleServerConfiguration(req, res, urlPart) {
     }
 
     function mapParam(pair) {
-      if (pair.key === "serviceUrl") {
+      if (pair.key === 'serviceUrl') {
         this.url = pair.val;
-        this.path = pair.val.replace(/\//g, "_");
-      } else if (pair.key === "serviceData") {
+        this.path = pair.val.replace(/\//g, '_');
+      } else if (pair.key === 'serviceData') {
         if (pair.val && pair.val.length > 0) {
           this.data = pair.val;
         }
-      } else if (pair.key === "serviceMethod") {
+      } else if (pair.key === 'serviceMethod') {
         this.method = pair.val.toLowerCase();
-      } else if (pair.key === "serviceParam") {
+      } else if (pair.key === 'serviceParam') {
         this.param = pair.val.length > 0 ? pair.val : undefined;
-      }else if (pair.key === 'header'){
+      } else if (pair.key === 'header') {
         this.headers = pair.val;
       }
     }
   }
 
   function extractParam(sTarget) {
-    return sTarget.split("&").map(pair => {
-      let aParam = pair.split("=");
+    return sTarget.split('&').map(pair => {
+      let aParam = pair.split('=');
       return {
         key: aParam[0],
-        val: decodeURIComponent(aParam[1].replace(/\+/g, "%20"))
+        val: decodeURIComponent(aParam[1].replace(/\+/g, '%20'))
       };
     });
   }
@@ -250,10 +248,7 @@ function retrieveDomainName(url) {
 }
 
 function replaceDomain(url, domain) {
-  return url.replace(
-    /^(http(?:s)?:\/\/)(?:[^\/]+)(\/.*)$/,
-    "$1" + domain + "$2"
-  );
+  return url.replace(/^(http(?:s)?:\/\/)(?:[^\/]+)(\/.*)$/, '$1' + domain + '$2');
 }
 
 function errResponse(err, res) {
@@ -265,7 +260,7 @@ function errResponse(err, res) {
 
 function handleRemoteRes(hostRes, req, res, cacheHandler) {
   res.statusCode = hostRes.statusCode;
-  var __ignoreCache = req.headers["__ignore-cache__"];
+  var __ignoreCache = req.headers['__ignore-cache__'];
   Object.keys(hostRes.headers).forEach(item => {
     res.setHeader(item, hostRes.headers[item]);
   });
@@ -278,13 +273,13 @@ function handleRemoteRes(hostRes, req, res, cacheHandler) {
     return Promise.resolve();
   } else if (hostRes.statusCode >= 300 && hostRes.statusCode < 400) {
     console.log(`status is ${hostRes.statusCode}`);
-    var redirect = res.getHeader("location");
+    var redirect = res.getHeader('location');
     if (
       redirect &&
       retrieveDomainName(redirect) &&
-      retrieveDomainName(redirect) === config.get("endpointServer.host")
+      retrieveDomainName(redirect) === config.get('endpointServer.host')
     ) {
-      res.setHeader("location", replaceDomain(redirect, req.headers.host));
+      res.setHeader('location', replaceDomain(redirect, req.headers.host));
     }
     hostRes.pipe(res);
     return Promise.resolve();
@@ -299,34 +294,27 @@ function handleRemoteRes(hostRes, req, res, cacheHandler) {
 function serverCb(req, res) {
   debugger;
   var _reqeustHeader = req.headers;
-  var __ignoreCache = _reqeustHeader["__ignore-cache__"];
+  var __ignoreCache = _reqeustHeader['__ignore-cache__'];
 
   const _handleResponse = (hostRes, req, res) => {
-    return config.get("sync") === "true"
-      ? handleRemoteRes(
-          hostRes,
-          req,
-          res,
-          utils.bind(serviceConfig.generateCacheStream, serviceConfig)
-        )
+    return config.get('sync') === 'true'
+      ? handleRemoteRes(hostRes, req, res, utils.bind(serviceConfig.generateCacheStream, serviceConfig))
       : handleRemoteRes(hostRes, req, res);
   };
 
-  if (config.get("workingMode") == constants.workingMode.dataProvider) {
+  if (config.get('workingMode') == constants.workingMode.dataProvider) {
     // cache only
     getDataProxy()
       .tryLoadLocalData(req, res)
       .then(data => {
-        console.log("find cache");
+        console.log('find cache');
       })
       .catch(err => {
         res.statusCode = 404;
         res.end(`can not find cache for ${req.url}`);
       });
-  } else if (
-    config.get("workingMode") == constants.workingMode.serviceProvider
-  ) {
-    if (config.get("cacheStrategy") == constants.cacheStrategy.cacheFirst) {
+  } else if (config.get('workingMode') == constants.workingMode.serviceProvider) {
+    if (config.get('cacheStrategy') == constants.cacheStrategy.cacheFirst) {
       getDataProxy()
         .tryLoadLocalData(req, res)
         .then(data => {
@@ -342,9 +330,7 @@ function serverCb(req, res) {
               errResponse(err, res);
             });
         });
-    } else if (
-      config.get("cacheStrategy") == constants.cacheStrategy.remoteFirst
-    ) {
+    } else if (config.get('cacheStrategy') == constants.cacheStrategy.remoteFirst) {
       requestRemoteServer(req, res)
         .then(hostRes => {
           return _handleResponse(hostRes, req, res);
@@ -374,69 +360,29 @@ function serverCb(req, res) {
   }
 }
 
-function preHandle(req, res, pattern, cb) {
-  if (req.url === "/favicon.ico") {
-    res.end("");
-    return;
-  } else if (req.method.toUpperCase() === constants.method.httpOptions) {
-    //handle preflight for CORS
-    if (
-      req.headers["access-control-request-method"] ||
-      req.headers["access-control-request-headers"]
-    ) {
-      res.writeHead(200, {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": Object.keys(constants.method)
-          .map(key => constants.method[key])
-          .join(",")
-      });
-      res.end("");
-      return;
-    }
-  } else if (req.method.toUpperCase() === constants.method.httpPost) {
-    var __reqBody = "";
-    let __aRequstData = [],
-      size = 0;
-    req
-      .on("data", data => {
-        __reqBody += data;
-        __aRequstData.push(data);
-        size += data.length;
-      })
-      .on("end", () => {
-        //req.bodyData = __reqBody;
-        req.bodyData = Buffer.concat(__aRequstData, size);
-        cb(req, res);
-      });
-  } else {
-    cb(req, res);
-  }
-}
 var config = new ServerConfig();
 var serviceConfig = new ServiceConfig(config);
 var oCache = new Cache(config);
 var oView = new View();
 const getDataProxy = () => {
-  return config.get("workingMode") == constants.workingMode.proxyCache
-    ? oCache
-    : serviceConfig;
+  return config.get('workingMode') == constants.workingMode.proxyCache ? oCache : serviceConfig;
 };
 
 const aRoutes = [
-  { target: new RegExp(".*"), cb: preHandle },
+  ...getPreRoutes(config),
   {
-    target: new RegExp("_service_persistent"),
+    target: new RegExp('_service_persistent'),
     cb: oCache.handlePersistence
   },
   {
-    target: new RegExp("/__server_config__(.*)"),
+    target: new RegExp('/__server_config__(.*)'),
     cb: handleServerConfiguration
   },
   ...getDWRRoutes(config),
-  { target: new RegExp(config.get("resourceRoute")), cb: handleResource },
-  { target: new RegExp("/__public/"), cb: handleStatic },
+  { target: new RegExp(config.get('resourceRoute')), cb: handleResource },
+  { target: new RegExp('/__public/'), cb: handleStatic },
   ...getHomeRoutes(config),
-  { target: new RegExp(".*"), cb: serverCb }
+  { target: new RegExp('.*'), cb: serverCb }
 ];
 const route = constructRoute(aRoutes);
 const requestRemoteServer = remoteWrapper(config);
@@ -456,5 +402,5 @@ const server = http.createServer(route);
 //   route
 // );
 
-server.listen(config.get("port"));
-console.log(`Server is running at 127.0.0.1 , port ${config.get("port")}`);
+server.listen(config.get('port'));
+console.log(`Server is running at 127.0.0.1 , port ${config.get('port')}`);

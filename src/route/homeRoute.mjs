@@ -1,7 +1,10 @@
+import path from "path";
+import utils from "../utils/utils";
 
-import path from 'path';
-import utils from '../utils/utils';
-
+/**
+ * support SF home page
+ * @param config
+ */
 const getRoutes = config => {
   const ROOT = config.get("rootPath");
   return [
@@ -22,7 +25,9 @@ const getRoutes = config => {
       target: new RegExp(/^\/ui\/homepage3\/.*\/framework|todo\/.*/), // home page3 web project
       cb: (req, res) => {
         const relativePath = "/au-homepage3-web/src/main/webapp";
-        const __path = req.url.replace("_dev-snapshot", "").replace(/(.*)_.{32}(\.js)$/, '$1$2');
+        const __path = req.url
+          .replace("_dev-snapshot", "")
+          .replace(/(.*)_.{32}(\.js)$/, "$1$2");
         const filePath = path.join(ROOT, relativePath, __path);
         utils.sendFile(filePath, res);
       }

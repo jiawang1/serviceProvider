@@ -24,5 +24,12 @@ module.exports = {
     'no-debugger': 'warn',
     'linebreak-style': 0
   },
+  settings: {
+    'import/resolver': {
+      node: {
+        extensions: ['.mjs', '.js', '.jsx']
+      }
+    }
+  },
   root: true
 };
