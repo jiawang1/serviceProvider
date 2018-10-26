@@ -12,7 +12,6 @@ const http = require("http"),
   ServerConfig = require("./service/ServerConfig"),
   constructRoute = require("./view/route"),
   remoteWrapper = require("./service/remoteWrapper"),
-  router = require("./view/ResourceRouter.js"),
   getHomeRoutes = require("./route/homeRoute"),
   getDWRRoutes = require('./route/dwrRoute'),
   constants = require("./utils/constants.js");
