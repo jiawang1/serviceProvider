@@ -18,7 +18,7 @@ class View {
         res.end();
         return;
       }
-      zlib.gzip(Buffer.from(str), (err, buffer) => {
+      zlib.gzip(Buffer.from(str), (err, buffer) => { // eslint-disable-line
         if (!err) {
           res.writeHead(200, {
             'Content-Type': 'text/html',
