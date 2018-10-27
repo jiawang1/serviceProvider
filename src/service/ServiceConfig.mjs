@@ -44,7 +44,7 @@ class ServiceConfig {
          *  for post , the param should be  url part after ? + bodydata in request
          * */
 
-    let aUrl = req.url.split('?');
+    const aUrl = req.url.split('?');
     oService.url = aUrl[0];
 
     if (oService.method === constants.method.httpGet) {
@@ -69,22 +69,17 @@ class ServiceConfig {
   }
 
   __findService(oService) {
-    return this.serviceMap.findIndex(service => {
-      //	if (oService.method === 'get') {
-      return (
+    return this.serviceMap.findIndex(
+      service =>
         service.url === oService.url && service.method === oService.method && service.param === oService.param
-      );
-      //		} else {
-      //	return service.url === oService.url && service.method === oService.method;
-      ///}
-    });
+    );
   }
 
   addServiceURL(oService) {
     return new Promise((resolve, reject) => {
       // only get can support multi param
       if (!this.__hasService(oService)) {
-        let __service = Object.assign({}, oService);
+        const __service = Object.assign({}, oService);
         __service.data = null;
         this.serviceMap.push(__service);
         this.__saveServiceList(oService)
@@ -111,9 +106,8 @@ class ServiceConfig {
   generatePath(oService) {
     if (oService.path && oService.path.indexOf('_config') >= 0) {
       return oService.path;
-    } else {
-      return path.join('./_config', oService.method + oService.path) + '.json';
     }
+    return path.join('./_config', oService.method + oService.path) + '.json';
   }
 
   __generateKey(oService) {
@@ -133,9 +127,9 @@ class ServiceConfig {
         if (err) {
           const _oCache = {};
           _oCache[_key] = __cacheData;
-          fs.writeFile(_path, JSON.stringify(_oCache), 'utf-8', err => {
-            if (err) {
-              reject(err);
+          fs.writeFile(_path, JSON.stringify(_oCache), 'utf-8', error => {
+            if (error) {
+              reject(error);
             } else {
               resolve(oService);
             }
@@ -144,9 +138,9 @@ class ServiceConfig {
           try {
             const cacheData = JSON.parse(data);
             cacheData[_key] = __cacheData;
-            fs.writeFile(_path, JSON.stringify(cacheData), 'utf-8', err => {
-              if (err) {
-                reject(err);
+            fs.writeFile(_path, JSON.stringify(cacheData), 'utf-8', error => {
+              if (error) {
+                reject(error);
               } else {
                 resolve(oService);
               }
@@ -160,7 +154,7 @@ class ServiceConfig {
   }
 
   __deleteService(oService) {
-    var _path = this.generatePath(oService);
+    const _path = this.generatePath(oService);
     return new Promise((resolve, reject) => {
       if (oService.param && oService.param.length > 0) {
         fs.readFile(_path, 'utf-8', (err, data) => {
@@ -168,12 +162,12 @@ class ServiceConfig {
             console.error(err);
             resolve('no-data');
           } else {
-            let oData = JSON.parse(data);
+            const oData = JSON.parse(data);
             delete oData[oService.param];
-            fs.writeFile(_path, JSON.stringify(oData), 'utf-8', err => {
-              if (err) {
-                console.error(err);
-                reject(err);
+            fs.writeFile(_path, JSON.stringify(oData), 'utf-8', error => {
+              if (error) {
+                console.error(error);
+                reject(error);
               } else {
                 resolve(oService);
               }
@@ -192,6 +186,7 @@ class ServiceConfig {
       }
     });
   }
+
   deleteService(oService) {
     return new Promise((resolve, reject) => {
       if (!this.__hasService(oService)) {
@@ -234,7 +229,7 @@ class ServiceConfig {
 
   tryLoadLocalData(req, res) {
     // 		let oService = this.__constructServiceObject(req);
-    let oService = this.__generateConfigFromRequest(req);
+    const oService = this.__generateConfigFromRequest(req);
     return this.loadServiceData(oService).then(data => {
       if (data.headers) {
         const headers = typeof data.headers === 'string' ? JSON.parse(data.headers) : data.headers;
