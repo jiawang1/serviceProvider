@@ -5,29 +5,29 @@ import fileLoader from './FileLoader';
 import dbLoader from './DBLoader';
 import constants from '../utils/constants';
 
+const template = {
+  port: 8079,
+  cacheStrategy: constants.cacheStrategy.remoteFirst,
+  workingMode: constants.workingMode.serviceProvider,
+  sync: true, // if sync = true , it will update cache automatically after response back from remote server
+  toDatabase: false,
+  databaseName: '',
+  'endpointServer.address': 'https://localhost',
+  'endpointServer.port': 9002,
+  'endpointServer.host': undefined,
+  'endpointServer.user': undefined,
+  'endpointServer.password': undefined,
+  cacheFile: 'proxyCache.json',
+  resourceRoute: '/_ui/(.*)', // "/webapp/(.*)"
+  SSLKey: '',
+  SSLCert: '',
+  rootPath: '',
+  'proxy.host': undefined,
+  'proxy.port': undefined
+};
+
 class ServerConfig {
   static getDefault() {
-    const template = {
-      port: 8079,
-      cacheStrategy: constants.cacheStrategy.remoteFirst,
-      workingMode: constants.workingMode.serviceProvider,
-      sync: true, // if sync = true , it will update cache automatically after response back from remote server
-      toDatabase: false,
-      databaseName: '',
-      'endpointServer.address': 'https://localhost',
-      'endpointServer.port': 9002,
-      'endpointServer.host': undefined,
-      'endpointServer.user': undefined,
-      'endpointServer.password': undefined,
-      cacheFile: 'proxyCache.json',
-      resourceRoute: '/_ui/(.*)', // "/webapp/(.*)"
-      SSLKey: '',
-      SSLCert: '',
-      rootPath: '',
-      'proxy.host': undefined,
-      'proxy.port': undefined
-    };
-
     const __defaultConfig = Object.keys(template).reduce((obj, key) => {
       if (key.indexOf('.') >= 0) {
         key.split('.').forEach((K, inx, arr) => {
@@ -48,23 +48,23 @@ class ServerConfig {
     return __defaultConfig;
   }
 
-  static get fields() {
-    return Array.from(ServerConfig.getDefault().keys());
+  get fields() {
+    return Object.keys(template);
   }
 
-  set(key, val) {
-    if (ServerConfig.fields.indexOf(key) >= 0) {
+  set(k, val) {
+    if (ServerConfig.fields.indexOf(k) >= 0) {
       let _o = this.serverMap;
-      key.split('.').some((key, inx, arr) => {
+      k.split('.').some((key, inx, arr) => {
         if (inx === arr.length - 1) {
           if (_o[key] !== val) {
             this.isChanged = true;
             _o[key] = val;
           }
           return true;
-        } else {
-          _o = _o[key];
         }
+        _o = _o[key];
+        return false;
       });
     }
     return this;
@@ -112,7 +112,7 @@ class ServerConfig {
   }
 
   __loadEnvironmentConfig() {
-    const aKeys = ServerConfig.fields;
+    const aKeys = this.fields;
     var args = {},
       envmap = {};
 
@@ -169,7 +169,7 @@ class ServerConfig {
     this.isChanged = false;
     const defaultMap = ServerConfig.getDefault();
     this.serverMap = {};
-    Object.assign(this.serverMap, defaultMap, this.__loadEnvironmentConfig(),this.loadConfigFile());
+    Object.assign(this.serverMap, defaultMap, this.__loadEnvironmentConfig(), this.loadConfigFile());
     this.serverMap.toDatabase && this.__initDB(this.serverMap['databaseName']);
     console.log(typeof this.get('workingMode'));
   }
@@ -187,4 +187,7 @@ function assignValue(key, val, oo) {
   });
 }
 
-export default ServerConfig;
+const oConfig = new ServerConfig();
+const getServerConfig = () => oConfig;
+
+export default getServerConfig;

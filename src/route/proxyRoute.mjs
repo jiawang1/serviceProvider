@@ -1,8 +1,9 @@
 import constants from '../utils/constants';
 import remoteWrapper from '../service/remoteWrapper';
 import Cache from '../service/ProxyCache';
+import getServerConfig from '../service/ServerConfig';
 
-const oCache = new Cache();
+const oCache = new Cache(getServerConfig());
 
 const getDataSource = (config, serviceConfig) =>
   config.get('workingMode') === constants.workingMode.proxyCache ? oCache : serviceConfig;
@@ -120,4 +121,11 @@ const createProxyRoute = (config, serviceConfig) => {
   };
 };
 
-export default createProxyRoute;
+const getProxyRoute = (config, serviceConfig) => [
+  {
+    target: new RegExp('.*'),
+    cb: createProxyRoute(config, serviceConfig)
+  }
+];
+
+export default getProxyRoute;

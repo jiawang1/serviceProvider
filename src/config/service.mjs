@@ -1,6 +1,6 @@
 import path from 'path';
 import View from './View';
-import ServerConfig from '../service/ServerConfig';
+import getServerConfig from '../service/ServerConfig';
 
 import constants from '../utils/constants';
 
@@ -12,7 +12,7 @@ const createServerRoute = (config, serviceConfig) => (req, res, urlPart) => {
     const model = {};
     switch (viewName) {
       case 'config':
-        ServerConfig.fields.forEach(field => {
+        getServerConfig().fields.forEach(field => {
           model[field] = config.get(field);
         });
         return {

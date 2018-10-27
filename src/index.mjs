@@ -4,15 +4,15 @@ import fs from 'fs';
 import path from 'path';
 import ServiceConfig from './service/ServiceConfig';
 import utils from './utils/utils';
-import ServerConfig from './service/ServerConfig';
+import getServerConfig from './service/ServerConfig';
 import constructRoute from './route/route';
 import getHomeRoutes from './route/homeRoute';
 import getDWRRoutes from './route/dwrRoute';
 import getPreRoutes from './route/preRoute';
 import createServerRoute from './config/service';
-import createProxyRoute from './route/proxyRoute';
+import getProxyRoute from './route/proxyRoute';
 
-const config = new ServerConfig();
+const config = getServerConfig();
 const serviceConfig = new ServiceConfig(config);
 /*
  * this function used to handle request for server consiguration page
@@ -44,7 +44,7 @@ const aRoutes = [
   { target: new RegExp(config.get('resourceRoute')), cb: handleResource },
   { target: new RegExp('/__public/'), cb: handleStatic },
   ...getHomeRoutes(config),
-  { target: new RegExp('.*'), cb: createProxyRoute(config, serviceConfig) }
+  ...getProxyRoute(config, serviceConfig)
 ];
 const route = constructRoute(aRoutes);
 
