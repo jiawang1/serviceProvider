@@ -1,7 +1,10 @@
 import constants from '../utils/constants';
 import remoteWrapper from '../service/remoteWrapper';
+import Cache from '../service/ProxyCache';
 
-const getDataSource = () =>
+const oCache = new Cache();
+
+const getDataSource = (config, serviceConfig) =>
   config.get('workingMode') === constants.workingMode.proxyCache ? oCache : serviceConfig;
 
 function replaceDomain(url, domain) {
@@ -39,8 +42,8 @@ function handleRemoteRes(hostRes, req, res, cacheHandler) {
     const redirect = res.getHeader('location');
     if (
       redirect &&
-      retrieveDomainName(redirect) &&
-      retrieveDomainName(redirect) === config.get('endpointServer.host')
+      retrieveDomainName(redirect)
+      // && retrieveDomainName(redirect) === config.get('endpointServer.host') //TODO this should consider how to redirect
     ) {
       res.setHeader('location', replaceDomain(redirect, req.headers.host));
     }
@@ -66,7 +69,7 @@ const createProxyRoute = (config, serviceConfig) => {
 
     if (Number(config.get('workingMode')) === constants.workingMode.dataProvider) {
       // cache only
-      getDataSource()
+      getDataSource(config, serviceConfig)
         .tryLoadLocalData(req, res)
         .then(() => {
           console.log('find cache');
@@ -77,7 +80,7 @@ const createProxyRoute = (config, serviceConfig) => {
         });
     } else if (Number(config.get('workingMode')) === constants.workingMode.serviceProvider) {
       if (Number(config.get('cacheStrategy')) === constants.cacheStrategy.cacheFirst) {
-        getDataSource()
+        getDataSource(config, serviceConfig)
           .tryLoadLocalData(req, res)
           .then(() => {
             console.log(`find in cache ${req.url}`);
@@ -94,7 +97,7 @@ const createProxyRoute = (config, serviceConfig) => {
         requestRemoteServer(req, res)
           .then(hostRes => _handleResponse(hostRes, req, res))
           .catch(() =>
-            getDataSource()
+            getDataSource(config, serviceConfig)
               .tryLoadLocalData(req, res)
               .then(() => {
                 console.log(`find in cache ${req.url}`);
