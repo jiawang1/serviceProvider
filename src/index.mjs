@@ -44,12 +44,11 @@ const aRoutes = [
   { target: new RegExp(config.get('resourceRoute')), cb: handleResource },
   { target: new RegExp('/__public/'), cb: handleStatic },
   ...getHomeRoutes(config),
-  ...getProxyRoute(config, serviceConfig)
+  ...getProxyRoute(serviceConfig)
 ];
 const route = constructRoute(aRoutes);
 
-const ISHTTP = true;
-const server = ISHTTP
+const server = !config.isSSL()
   ? http.createServer(route)
   : https.createServer(
       {

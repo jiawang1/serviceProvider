@@ -28,6 +28,7 @@ const template = {
 
 class ServerConfig {
   static getDefault() {
+    /* eslint-disable no-param-reassign */
     const __defaultConfig = Object.keys(template).reduce((obj, key) => {
       if (key.indexOf('.') >= 0) {
         key.split('.').forEach((K, inx, arr) => {
@@ -42,7 +43,7 @@ class ServerConfig {
       }
       return obj;
     }, {});
-
+    /* eslint-enable no-param-reassign */
     __defaultConfig.keys = () => Object.keys(template);
     ServerConfig.getDefault = () => __defaultConfig;
     return __defaultConfig;
@@ -53,7 +54,7 @@ class ServerConfig {
   }
 
   set(k, val) {
-    if (ServerConfig.fields.indexOf(k) >= 0) {
+    if (this.fields.indexOf(k) >= 0) {
       let _o = this.serverMap;
       k.split('.').some((key, inx, arr) => {
         if (inx === arr.length - 1) {
@@ -110,58 +111,16 @@ class ServerConfig {
   __retrieveSymbol(key) {
     return this.__symbolMap.get(key) || this.__symbolMap.set(key, Symbol(key)).get(key);
   }
-
-  __loadEnvironmentConfig() {
-    const aKeys = this.fields;
-    var args = {},
-      envmap = {};
-
-    // load from package.json first if start up by npm
-    aKeys.forEach(key => {
-      if (process.env['npm_package_config_' + key]) {
-        //	 envmap.set(key, process.env["npm_package_config_" + key]);
-        assignValue(key, process.env['npm_package_config_' + key], envmap);
-      }
-    });
-
-    // load from command line
-    process.argv.slice().reduce((pre, item) => {
-      let matches;
-      if ((matches = pre.match(/^--(.*)/)) && aKeys.indexOf(matches[1].toLowerCase()) >= 0) {
-        //envmap.set(matches[1].toLowerCase(), item);
-        //envmap[matches[1].toLowerCase()] = item;
-        assignValue(matches[1].toLowerCase(), item, envmap);
-      }
-      return item;
-    });
-    return envmap;
-  }
-
-  calConfig() {
-    return this;
-  }
-
-  loadConfigFile() {
-    try {
-      fs.statSync(constants.SERVER_CONFIG);
-      var __config = fs.readFileSync(constants.SERVER_CONFIG, 'utf-8');
-      return __config.length > 0 ? JSON.parse(__config) : {};
-    } catch (e) {
-      try {
-        var stat = fs.statSync('./_config');
-      } catch (e) {
-        fs.mkdirSync('./_config');
-      }
-      fs.writeFile(constants.SERVER_CONFIG, '', () => {});
-      return {};
-    }
-  }
+  // calConfig() {
+  //   return this;
+  // }
 
   getServerLoader() {
     return this.get('toDatabase') === 'true' ? dbLoader : fileLoader;
   }
 
   __initDB(name) {
+    console.log(name);
     // dbLoader.initDB(name);
   }
 
@@ -169,22 +128,12 @@ class ServerConfig {
     this.isChanged = false;
     const defaultMap = ServerConfig.getDefault();
     this.serverMap = {};
-    Object.assign(this.serverMap, defaultMap, this.__loadEnvironmentConfig(), this.loadConfigFile());
-    this.serverMap.toDatabase && this.__initDB(this.serverMap['databaseName']);
-    console.log(typeof this.get('workingMode'));
-  }
-}
+    Object.assign(this.serverMap, defaultMap);
 
-function assignValue(key, val, oo) {
-  key.split('.').forEach((key, inx, arr) => {
-    if (inx === arr.length - 1) {
-      oo[key] = val;
-    } else {
-      if (oo[key] === undefined) {
-        oo[key] = {};
-      }
+    if (this.serverMap.toDatabase) {
+      this.__initDB(this.serverMap.databaseName);
     }
-  });
+  }
 }
 
 const oConfig = new ServerConfig();

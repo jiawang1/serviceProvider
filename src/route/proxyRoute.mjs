@@ -57,13 +57,11 @@ function handleRemoteRes(hostRes, req, res, cacheHandler) {
   return Promise.reject(hostRes);
 }
 
-const createProxyRoute = (config, serviceConfig) => {
+const createProxyRoute = serviceConfig => {
+  const config = getServerConfig();
   const requestRemoteServer = remoteWrapper(config);
   return (req, res) => {
-    debugger;
-    // var __ignoreCache = _reqeustHeader['__ignore-cache__'];
-
-    const _handleResponse = (hostRes, request, response) =>
+    const handleResponseWithCache = (hostRes, request, response) =>
       config.get('sync') === 'true'
         ? handleRemoteRes(hostRes, request, response, serviceConfig.generateCacheStream.bind(serviceConfig))
         : handleRemoteRes(hostRes, request, response);
@@ -72,9 +70,6 @@ const createProxyRoute = (config, serviceConfig) => {
       // cache only
       getDataSource(config, serviceConfig)
         .tryLoadLocalData(req, res)
-        .then(() => {
-          console.log('find cache');
-        })
         .catch(() => {
           res.statusCode = 404;
           res.end(`can not find cache for ${req.url}`);
@@ -86,17 +81,16 @@ const createProxyRoute = (config, serviceConfig) => {
           .then(() => {
             console.log(`find in cache ${req.url}`);
           })
-          .catch(err => {
-            console.log(err.stack || err);
+          .catch(() => {
             requestRemoteServer(req, res)
-              .then(hostRes => _handleResponse(hostRes, req, res))
+              .then(hostRes => handleResponseWithCache(hostRes, req, res))
               .catch(error => {
                 responseError(error, res);
               });
           });
       } else if (Number(config.get('cacheStrategy')) === constants.cacheStrategy.remoteFirst) {
         requestRemoteServer(req, res)
-          .then(hostRes => _handleResponse(hostRes, req, res))
+          .then(hostRes => handleResponseWithCache(hostRes, req, res))
           .catch(() =>
             getDataSource(config, serviceConfig)
               .tryLoadLocalData(req, res)
@@ -114,17 +108,16 @@ const createProxyRoute = (config, serviceConfig) => {
       requestRemoteServer(req, res)
         .then(hostRes => handleRemoteRes(hostRes, req, res))
         .catch(err => {
-          console.error(`failed to find in cache ${req.url}`);
           responseError(err, res);
         });
     }
   };
 };
 
-const getProxyRoute = (config, serviceConfig) => [
+const getProxyRoute = serviceConfig => [
   {
     target: new RegExp('.*'),
-    cb: createProxyRoute(config, serviceConfig)
+    cb: createProxyRoute(serviceConfig)
   }
 ];
 

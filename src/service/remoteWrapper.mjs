@@ -12,7 +12,6 @@ const requestViaProxy = (fn => (...args) => utils.wrapToPromise(fn, null)(...arg
   const targetPort = `:${target.port || 443}`;
   const { headers } = target;
   headers.host = target.host + targetPort;
-
   http
     .request({
       hostname: proxyOp.host,
@@ -42,7 +41,10 @@ const requestViaProxy = (fn => (...args) => utils.wrapToPromise(fn, null)(...arg
         .on('error', err => {
           reportError(err, cb);
         });
-      target.bodyData && proxyReq.write(target.bodyData);
+      if (target.bodyData) {
+        proxyReq.write(target.bodyData);
+      }
+
       proxyReq.end();
     })
     .on('error', err => {
@@ -51,15 +53,14 @@ const requestViaProxy = (fn => (...args) => utils.wrapToPromise(fn, null)(...arg
     .end();
 });
 
-const requestRemoteServer = config => (req, res) => {
+const requestRemoteServer = config => req => {
   const endServerHost = config.get('endpointServer.host');
   // const __ignoreCache = req.headers['__ignore-cache__'];
   const endServerPort = config.get('endpointServer.port');
   let oAuth;
   if (config.get('endpointServer.user')) {
-    oAuth = `Basic ${new Buffer(
-      config.get('endpointServer.user') + ':' + config.get('endpointServer.password')
-    ).toString('base64')}`;
+    const authInfo = `${config.get('endpointServer.user')}:${config.get('endpointServer.password')}`;
+    oAuth = `Basic ${Buffer.from(authInfo).toString('base64')}`;
   }
   /*
 	* https via proxy, request via tunnel.
@@ -77,36 +78,41 @@ const requestRemoteServer = config => (req, res) => {
       bodyData: req.bodyData
     });
   }
-  const __option = {};
-  __option.method = req.method;
-  __option.headers = Object.assign(__option.headers || {}, req.headers);
-  __option.headers.host = endServerHost;
-  if (__option.headers.origin) {
-    __option.headers.origin = __option.headers.origin.replace(/\/\/.*/, `//${endServerHost}`);
+  const option = {};
+  option.method = req.method;
+  option.headers = Object.assign({}, req.headers);
+  option.headers.host = endServerHost;
+  if (option.headers.origin) {
+    option.headers.origin = option.headers.origin.replace(/\/\/.*/, `//${endServerHost}`);
   }
 
   /*
-         *  some site will set cookie to stick to specific domain, will check whether
-         *  refer will be the same with host
-         * */
-  delete __option.headers.referer;
+   *  some site will set cookie to stick to specific domain, will check whether
+   *  refer will be the same with host
+   * */
+  delete option.headers.referer;
 
-  oAuth && (__option.headers.Authorization = oAuth);
+  if (oAuth) {
+    option.headers.Authorization = oAuth;
+  }
+
   if (config.hasProxy()) {
     const oProxy = config.get('proxy');
-    __option.hostname = oProxy.host;
-    __option.port = oProxy.port;
-    __option.path = config.get('endpointServer.address') + req.url;
+    option.hostname = oProxy.host;
+    option.port = oProxy.port;
+    option.path = config.get('endpointServer.address') + req.url;
   } else {
-    __option.hostname = __option.headers.host;
-    endServerPort && (__option.port = endServerPort);
-    __option.path = req.url;
+    option.hostname = option.headers.host;
+    if (endServerPort) {
+      option.port = endServerPort;
+    }
+    option.path = req.url;
   }
 
   if (config.isSSL()) {
     // by this way, to get rid of untruseted https site
-    __option.strictSSL = false;
-    __option.agent = new https.Agent({
+    option.strictSSL = false;
+    option.agent = new https.Agent({
       host: endServerHost,
       port: endServerPort,
       path: req.url,
@@ -115,34 +121,27 @@ const requestRemoteServer = config => (req, res) => {
   }
 
   return new Promise((resolve, reject) => {
-    const __req = (config.isSSL() ? https : http).request(__option, hostRes => {
-      // if (Math.floor(hostRes.statusCode / 100) >= 4) {
-      // 	let err = new Error(`request failed with status code ${hostRes.statusCode}`);
-      // 	err.statusCode = hostRes.statusCode;
-      // 	reject(err);
-      // } else {
-      // 	resolve(hostRes);
-      // }
-
+    const hostRequest = (config.isSSL() ? https : http).request(option, hostRes => {
       if (hostRes.headers['set-cookie']) {
-        hostRes.headers['set-cookie'] = hostRes.headers['set-cookie'].map(cookie => {
-          return cookie.replace(/(domain=)(.*)(;)/, '$1localhost$3');
-        });
+        // eslint-disable-next-line no-param-reassign
+        hostRes.headers['set-cookie'] = hostRes.headers['set-cookie'].map(cookie =>
+          cookie.replace(/(domain=)(.*)(;)/g, '$1localhost$3')
+        );
       }
       resolve(hostRes);
     });
-    __req.on('error', e => {
+
+    hostRequest.on('error', e => {
       reject(e);
     });
-    __req.setTimeout(100000, () => {
+    hostRequest.setTimeout(100000, () => {
       reject(new Error('request has timeout : 10000'));
     });
     if (req.bodyData) {
-      __req.write(req.bodyData); // post request body
-      console.log(req.bodyData.length);
+      hostRequest.write(req.bodyData); // post request body
     }
 
-    __req.end();
+    hostRequest.end();
   });
 };
 
