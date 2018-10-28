@@ -31,11 +31,12 @@ class ServerConfig {
     /* eslint-disable no-param-reassign */
     const __defaultConfig = Object.keys(template).reduce((obj, key) => {
       if (key.indexOf('.') >= 0) {
+        let temp = obj;
         key.split('.').forEach((K, inx, arr) => {
           if (inx === arr.length - 1) {
-            obj[K] = template[key];
+            temp[K] = template[key];
           } else {
-            obj = obj[K] ? obj[K] : (obj[K] = {});
+            temp = temp[K] ? temp[K] : (temp[K] = {});
           }
         });
       } else {
@@ -44,6 +45,7 @@ class ServerConfig {
       return obj;
     }, {});
     /* eslint-enable no-param-reassign */
+    debugger;
     __defaultConfig.keys = () => Object.keys(template);
     ServerConfig.getDefault = () => __defaultConfig;
     return __defaultConfig;
@@ -108,12 +110,21 @@ class ServerConfig {
     return this.get('endpointServer.address').indexOf('https') >= 0;
   }
 
-  __retrieveSymbol(key) {
-    return this.__symbolMap.get(key) || this.__symbolMap.set(key, Symbol(key)).get(key);
+  loadConfigFile() {
+    try {
+      fs.statSync(constants.SERVER_CONFIG);
+      const config = fs.readFileSync(constants.SERVER_CONFIG, 'utf-8');
+      return config.length > 0 ? JSON.parse(config) : {};
+    } catch (e) {
+      try {
+        fs.statSync('./_config');
+      } catch (err) {
+        fs.mkdirSync('./_config');
+      }
+      fs.writeFileSync(constants.SERVER_CONFIG, '');
+      return {};
+    }
   }
-  // calConfig() {
-  //   return this;
-  // }
 
   getServerLoader() {
     return this.get('toDatabase') === 'true' ? dbLoader : fileLoader;
@@ -126,9 +137,10 @@ class ServerConfig {
 
   constructor() {
     this.isChanged = false;
+    debugger;
     const defaultMap = ServerConfig.getDefault();
     this.serverMap = {};
-    Object.assign(this.serverMap, defaultMap);
+    Object.assign(this.serverMap, defaultMap, this.loadConfigFile());
 
     if (this.serverMap.toDatabase) {
       this.__initDB(this.serverMap.databaseName);

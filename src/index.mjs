@@ -9,7 +9,7 @@ import constructRoute from './route/route';
 import getHomeRoutes from './route/homeRoute';
 import getDWRRoutes from './route/dwrRoute';
 import getPreRoutes from './route/preRoute';
-import createServerRoute from './config/service';
+import createServerRoute from './config/configurationService';
 import getProxyRoute from './route/proxyRoute';
 
 const config = getServerConfig();
