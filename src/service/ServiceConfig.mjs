@@ -45,18 +45,18 @@ class ServiceConfig {
          * */
 
     const aUrl = req.url.split('?');
-    oService.url = aUrl[0];
+    [oService.url] = aUrl;
 
     if (oService.method === constants.method.httpGet) {
       oService.param = aUrl.length > 1 ? decodeURIComponent(aUrl[1]) : undefined;
+    } else if (aUrl.length > 1) {
+      oService.param = decodeURIComponent(`${aUrl[1]}_${req.bodyData}`);
+    } else if (req.bodyData) {
+      oService.param = decodeURIComponent(req.bodyData);
     } else {
-      oService.param =
-        aUrl.length > 1
-          ? decodeURIComponent(aUrl[1] + '_' + req.bodyData)
-          : req.bodyData
-            ? decodeURIComponent(req.bodyData)
-            : undefined;
+      oService.param = undefined;
     }
+
     oService.path = this.generatePath({
       method: oService.method,
       path: req.url.replace(/^(.*)\?.*/, '$1').replace(/\//g, '_')
@@ -107,7 +107,7 @@ class ServiceConfig {
     if (oService.path && oService.path.indexOf('_config') >= 0) {
       return oService.path;
     }
-    return path.join('./_config', oService.method + oService.path) + '.json';
+    return `${path.join('./_config', oService.method + oService.path)}.json`;
   }
 
   __generateKey(oService) {

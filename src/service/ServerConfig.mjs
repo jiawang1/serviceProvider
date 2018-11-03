@@ -73,15 +73,33 @@ class ServerConfig {
     return this;
   }
 
-  save() {
+  check(k, val) {
+    if (this.fields.indexOf(k) >= 0) {
+      let _o = this.serverMap;
+      return k.split('.').some((key, inx, arr) => {
+        if (inx === arr.length - 1) {
+          if (_o[key] !== val) {
+            _o[key] = val;
+            return true;
+          }
+          return false;
+        }
+        _o = _o[key];
+        return false;
+      });
+    }
+    return false;
+  }
+
+  save(aConfig) {
+    const isDiff = aConfig.reduce((tag, config) => tag || this.check(config.key, config.val), false);
     return new Promise((resolve, reject) => {
-      if (this.isChanged) {
+      if (isDiff) {
         fs.writeFile(constants.SERVER_CONFIG, JSON.stringify(this.serverMap), err => {
           if (err) {
             reject(err);
           } else {
             resolve('success');
-            this.isChanged = false;
           }
         });
       } else {
