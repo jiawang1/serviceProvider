@@ -1,36 +1,7 @@
 {
-  "name": "h-proxy",
-  "version": "1.0.1",
-  "description": "proxy tool",
-  "main": "src/index.mjs",
-  "config": {
-    "port": 8079
-  },
-  "scripts": {
-    "start": "node --experimental-modules src/index.mjs",
-    "debug": "node --inspect-brk --experimental-modules src/index.mjs",
-    "lint": "eslint ./src/**/*.mjs",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "dependencies": {
-    "ejs": "^2.4.2",
-    "eslint-config-prettier": "^3.1.0",
-    "eslint-plugin-import": "^2.14.0",
-    "eslint-plugin-jsx-a11y": "^6.1.2",
-    "eslint-plugin-prettier": "^3.0.0",
-    "eslint-plugin-react": "^7.11.1",
-    "react": "^16.5.1",
-    "react-dom": "^16.5.1"
-  },
-  "keywords": [
-    "proxy"
-  ],
-  "author": "Jia Wang",
-  "license": "MIT",
+  "name": "service-provider",
+  "private": true,
   "devDependencies": {
-    "chai": "^3.5.0",
-    "eslint": "^5.5.0",
-    "eslint-config-airbnb": "^17.1.0",
-    "prettier": "^1.14.2"
+    "lerna": "^3.4.3"
   }
 }
