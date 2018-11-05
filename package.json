@@ -1,6 +1,9 @@
 {
   "name": "service-provider",
   "private": true,
+  "scripts": {
+    "hoist": "npm install lerna && lerna bootstrap --hoist"
+  },
   "devDependencies": {
     "lerna": "^3.4.3"
   }

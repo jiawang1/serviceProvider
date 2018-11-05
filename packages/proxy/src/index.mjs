@@ -11,6 +11,8 @@ import getDWRRoutes from './route/dwrRoute';
 import getPreRoutes from './route/preRoute';
 import createServerRoute from './config/configurationService';
 import getProxyRoute from './route/proxyRoute';
+import appServer from 'service-provider-web';
+// const appServer = require('service-provider-web');
 
 const config = getServerConfig();
 const serviceConfig = new ServiceConfig(config);
@@ -60,3 +62,5 @@ const server = !config.isSSL()
 
 server.listen(config.get('port'));
 console.log(`Server is running at 127.0.0.1 , port ${config.get('port')}`);
+
+appServer();
