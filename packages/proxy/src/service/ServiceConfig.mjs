@@ -89,14 +89,6 @@ class ServiceConfig {
           .catch(err => {
             reject(err);
           });
-
-        //			fs.writeFile(SERVICE_CONFIG, JSON.stringify(this.serviceMap), (err)=>{
-        //			fs.writeF	if(err){
-        //			fs.writeF		reject(err);
-        //			fs.writeF	}else{
-        //			fs.writeF		resolve(serviceUrl);
-        //			fs.writeF	}
-        //			fs.writeF});
       } else {
         resolve('no_change');
       }

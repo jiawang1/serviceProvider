@@ -91,6 +91,42 @@ class ServerConfig {
     return false;
   }
 
+  _check(key, val, cache) {
+    const tmp = cache[key];
+    cache[key] = val; // eslint-disable-line
+    return tmp !== val;
+  }
+
+  updateCache(oConfig, cache = this.serverMap) {
+    return Object.keys(oConfig).reduce((key, tag) => {
+      if (typeof oConfig[key] === 'object') {
+        return this.updateCache(oConfig[key], cache[key]);
+      }
+      return this._check(key, oConfig[key], cache) || tag;
+    }, false);
+  }
+
+  saveConfig(oConfig) {
+    return new Promise((resolve, reject) => {
+      if (this.updateCache(oConfig)) {
+        fs.writeFile(constants.SERVER_CONFIG, JSON.stringify(this.serverMap), err => {
+          debugger;
+          if (err) {
+            reject(err);
+          } else {
+            resolve({ status: 'success' });
+          }
+        });
+      } else {
+        resolve({ status: 'no change' });
+      }
+    });
+  }
+
+  /**
+   * used to save server configuration, deprecated, use saveConfig instead
+   * @param aConfig
+   */
   save(aConfig) {
     const isDiff = aConfig.reduce((tag, config) => tag || this.check(config.key, config.val), false);
     return new Promise((resolve, reject) => {

@@ -8,6 +8,10 @@ const start = controller =>{
 
   const PORT = '9090';
 
+  if(require.resolve){
+    console.log(require.resolve('express'));
+  }
+
   router.use(express.static(path.resolve(__dirname, '..', 'build'), { maxAge: '30d' }));
 
   app.use(router);

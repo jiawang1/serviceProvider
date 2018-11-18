@@ -1,21 +1,27 @@
 import React, { Component } from 'react';
-import {Button} from 'antd';
-import logo from './logo.svg';
+import { HashRouter } from 'react-router-dom';
+import Menu from './menu';
+import ServerConfig from './routes/server-config';
+import ServiceList from './routes/service-list';
 import './App.css';
 
 class App extends Component {
   render() {
     return (
       <div className="App">
-        <header className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <p>
-            Edit <code>src/App.js</code> and save to reload.
-          </p>
-          <p>try server render</p>
-     
-        </header>
-        <Button>test</Button>
+
+
+        <HashRouter>
+          <React.Fragment>
+          <Menu />
+          <div className="app-content">
+
+              <ServerConfig />
+              <ServiceList />
+              </div>
+          </React.Fragment>
+        </HashRouter>
+
       </div>
     );
   }

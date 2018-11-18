@@ -1,5 +1,7 @@
 .App {
   text-align: center;
+  display: flex;
+  min-height: 100vh;
 }
 
 .App-logo {
@@ -17,6 +19,10 @@
   color: white;
 }
 
+.app-content{
+  overflow: hidden;
+  flex-grow: 1;
+}
 .App-link {
   color: #61dafb;
 }

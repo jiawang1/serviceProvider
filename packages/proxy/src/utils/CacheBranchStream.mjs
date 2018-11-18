@@ -1,5 +1,4 @@
-import zlib from "zlib";
-import { Transform } from "stream";
+import { Transform } from 'stream';
 
 class CacheBranchStream extends Transform {
   constructor(promiseCB) {
@@ -16,7 +15,7 @@ class CacheBranchStream extends Transform {
   }
 
   _flush(done) {
-    let data = new Buffer(this.size);
+    const data = Buffer.from(this.size);
     let pos = 0;
     this.chunks.forEach(chunk => {
       chunk.copy(data, pos);
@@ -24,9 +23,7 @@ class CacheBranchStream extends Transform {
     });
 
     this.cb(data.toString())
-      .then(() => {
-        return done();
-      })
+      .then(() => done())
       .catch(err => {
         console.error(err);
         done();

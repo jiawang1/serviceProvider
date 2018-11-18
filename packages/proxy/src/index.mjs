@@ -11,8 +11,7 @@ import getDWRRoutes from './route/dwrRoute';
 import getPreRoutes from './route/preRoute';
 import createServerRoute from './config/configurationService';
 import getProxyRoute from './route/proxyRoute';
-import appServer from 'service-provider-web';
-// const appServer = require('service-provider-web');
+import createConfigRoute from './route/serverConfigRoute';
 
 const config = getServerConfig();
 const serviceConfig = new ServiceConfig(config);
@@ -42,6 +41,7 @@ const aRoutes = [
     target: new RegExp('/__server_config__(.*)'),
     cb: createServerRoute(config, serviceConfig)
   },
+  ...createConfigRoute({ config, serviceConfig }),
   ...getDWRRoutes(config),
   { target: new RegExp(config.get('resourceRoute')), cb: handleResource },
   { target: new RegExp('/__public/'), cb: handleStatic },
@@ -62,5 +62,3 @@ const server = !config.isSSL()
 
 server.listen(config.get('port'));
 console.log(`Server is running at 127.0.0.1 , port ${config.get('port')}`);
-
-appServer();
