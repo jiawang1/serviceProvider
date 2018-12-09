@@ -122,16 +122,15 @@ const requestRemoteServer = config => req => {
 
   return new Promise((resolve, reject) => {
     const hostRequest = (config.isSSL() ? https : http).request(option, hostRes => {
-      debugger;
       if (hostRes.headers['set-cookie']) {
         // eslint-disable-next-line no-param-reassign
         hostRes.headers['set-cookie'] = hostRes.headers['set-cookie'].map(cookie => cookie.replace(/(domain=)(.*)(;)/g, '$1localhost$3'));
       }
+
       resolve(hostRes);
     });
 
     hostRequest.on('error', e => {
-      debugger
       reject(e);
     });
     hostRequest.setTimeout(100000, () => {

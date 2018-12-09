@@ -44,8 +44,7 @@ const utils = {
   bind
 };
 
-const __isType = type => oTarget =>
-  Object.prototype.toString.call(oTarget).replace(/^.*\s(.*)]$/, '$1') === type;
+const __isType = type => oTarget => Object.prototype.toString.call(oTarget).replace(/^.*\s(.*)]$/, '$1') === type;
 
 /**
  * export functions:

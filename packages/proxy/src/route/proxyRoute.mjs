@@ -24,7 +24,6 @@ function retrieveDomainName(url) {
 }
 
 function handleRemoteRes(hostRes, req, res, cacheHandler) {
-  debugger;
   res.statusCode = hostRes.statusCode;
   // const __ignoreCache = req.headers['__ignore-cache__'];
   Object.keys(hostRes.headers).forEach(item => {
