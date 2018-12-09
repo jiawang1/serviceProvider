@@ -14,11 +14,6 @@
   },
   "dependencies": {
     "ejs": "^2.4.2",
-    "eslint-config-prettier": "^3.1.0",
-    "eslint-plugin-import": "^2.14.0",
-    "eslint-plugin-jsx-a11y": "^6.1.2",
-    "eslint-plugin-prettier": "^3.0.0",
-    "eslint-plugin-react": "^7.11.1",
     "react": "^16.5.1",
     "react-dom": "^16.5.1",
     "service-provider-web": "^0.1.0",
@@ -30,6 +25,11 @@
   "author": "Jia Wang",
   "license": "MIT",
   "devDependencies": {
+    "eslint-config-prettier": "^3.1.0",
+    "eslint-plugin-import": "^2.14.0",
+    "eslint-plugin-jsx-a11y": "^6.1.2",
+    "eslint-plugin-prettier": "^3.0.0",
+    "eslint-plugin-react": "^7.11.1",
     "chai": "^3.5.0",
     "eslint": "^5.5.0",
     "eslint-config-airbnb": "^17.1.0",
