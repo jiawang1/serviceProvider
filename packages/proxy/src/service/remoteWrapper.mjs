@@ -63,10 +63,10 @@ const requestRemoteServer = config => req => {
     oAuth = `Basic ${Buffer.from(authInfo).toString('base64')}`;
   }
   /*
-	* https via proxy, request via tunnel.
-	* this kind of request have to create socket to proxy first, the use this as
-	* tunnel to connect to end point server
-	*/
+   * https via proxy, request via tunnel.
+   * this kind of request have to create socket to proxy first, the use this as
+   * tunnel to connect to end point server
+   */
   if (config.isSSL() && config.hasProxy()) {
     return requestViaProxy(config.serverMap.proxy, {
       path: req.url,
@@ -122,16 +122,16 @@ const requestRemoteServer = config => req => {
 
   return new Promise((resolve, reject) => {
     const hostRequest = (config.isSSL() ? https : http).request(option, hostRes => {
+      debugger;
       if (hostRes.headers['set-cookie']) {
         // eslint-disable-next-line no-param-reassign
-        hostRes.headers['set-cookie'] = hostRes.headers['set-cookie'].map(cookie =>
-          cookie.replace(/(domain=)(.*)(;)/g, '$1localhost$3')
-        );
+        hostRes.headers['set-cookie'] = hostRes.headers['set-cookie'].map(cookie => cookie.replace(/(domain=)(.*)(;)/g, '$1localhost$3'));
       }
       resolve(hostRes);
     });
 
     hostRequest.on('error', e => {
+      debugger
       reject(e);
     });
     hostRequest.setTimeout(100000, () => {

@@ -5,8 +5,7 @@ import getServerConfig from '../service/ServerConfig';
 
 const oCache = new Cache(getServerConfig());
 
-const getDataSource = (config, serviceConfig) =>
-  config.get('workingMode') === constants.workingMode.proxyCache ? oCache : serviceConfig;
+const getDataSource = (config, serviceConfig) => (config.get('workingMode') === constants.workingMode.proxyCache ? oCache : serviceConfig);
 
 function replaceDomain(url, domain) {
   return url.replace(/^(http(?:s)?:\/\/)(?:[^/]+)(\/.*)$/, `$1${domain}$2`);
@@ -25,6 +24,7 @@ function retrieveDomainName(url) {
 }
 
 function handleRemoteRes(hostRes, req, res, cacheHandler) {
+  debugger;
   res.statusCode = hostRes.statusCode;
   // const __ignoreCache = req.headers['__ignore-cache__'];
   Object.keys(hostRes.headers).forEach(item => {

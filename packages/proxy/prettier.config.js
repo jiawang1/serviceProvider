@@ -1,5 +1,5 @@
 module.exports = {
-  printWidth: 110,
+  printWidth: 160,
   parser: 'flow',
   singleQuote: true
 };

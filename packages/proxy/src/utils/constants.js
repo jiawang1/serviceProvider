@@ -14,6 +14,7 @@ const defineConst = obj => {
 };
 
 defineConst({
+  ROOT: '.serverProvider',
   SERVICE_CONFIG: './_config/serviceConfig.json',
   SERVER_CONFIG: './_config/serverConfig.json',
   MIME: {

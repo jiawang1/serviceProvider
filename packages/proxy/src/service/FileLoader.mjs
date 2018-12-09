@@ -1,21 +1,21 @@
 import fs from 'fs';
 import constants from '../utils/constants';
 
-const loadServerConfig = () => {
-  try {
-    fs.statSync(constants.SERVER_CONFIG);
-    const __config = fs.readFileSync(constants.SERVER_CONFIG, 'utf-8');
-    return __config.length > 0 ? JSON.parse(__config) : {};
-  } catch (e) {
-    try {
-      fs.statSync('./_config');
-    } catch (err) {
-      fs.mkdirSync('./_config');
-    }
-    fs.writeFile(constants.SERVER_CONFIG, '');
-    return {};
-  }
-};
+// const loadServerConfig = () => {
+//   try {
+//     fs.statSync(constants.SERVER_CONFIG);
+//     const __config = fs.readFileSync(constants.SERVER_CONFIG, 'utf-8');
+//     return __config.length > 0 ? JSON.parse(__config) : {};
+//   } catch (e) {
+//     try {
+//       fs.statSync('./_config');
+//     } catch (err) {
+//       fs.mkdirSync('./_config');
+//     }
+//     fs.writeFile(constants.SERVER_CONFIG, '');
+//     return {};
+//   }
+// };
 
 const loadServiceMap = () => {
   try {
@@ -24,6 +24,7 @@ const loadServiceMap = () => {
   } catch (e) {
     console.error(`failed to read file ${constants.SERVICE_CONFIG}, will create new empty file`);
     console.error(e.message || e);
+    console.log(__dirname);
     fs.writeFile(constants.SERVICE_CONFIG, '', () => {});
     return [];
   }
@@ -42,4 +43,4 @@ const loadServiceData = (path, rootKey) =>
     });
   });
 
-export default { loadServerConfig, loadServiceData, loadServiceMap };
+export default { loadServiceData, loadServiceMap };

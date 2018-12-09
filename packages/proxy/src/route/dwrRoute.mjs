@@ -8,10 +8,7 @@ const getRoutes = () => [
         if (typeof chunk === 'string') {
           const matched = req.bodyData.toString().match(/batchId=(\d+)/);
           if (matched) {
-            resText = chunk.replace(
-              /_remoteHandleCallback\([^,]*,/,
-              `_remoteHandleCallback('${matched[1]}',`
-            );
+            resText = chunk.replace(/_remoteHandleCallback\([^,]*,/, `_remoteHandleCallback('${matched[1]}',`);
           }
         }
         return _end.call(this, resText, encoding);

@@ -15,7 +15,7 @@ class CacheBranchStream extends Transform {
   }
 
   _flush(done) {
-    const data = Buffer.from(this.size);
+    const data = Buffer.allocUnsafe(this.size);
     let pos = 0;
     this.chunks.forEach(chunk => {
       chunk.copy(data, pos);

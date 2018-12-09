@@ -40,9 +40,9 @@ class ServiceConfig {
     oService.headers = (res && res.headers) || req.headers;
 
     /*
-         *  supprot request in EF, for get method, just consider url part after ? as param,
-         *  for post , the param should be  url part after ? + bodydata in request
-         * */
+     *  supprot request in EF, for get method, just consider url part after ? as param,
+     *  for post , the param should be  url part after ? + bodydata in request
+     * */
 
     const aUrl = req.url.split('?');
     [oService.url] = aUrl;
@@ -69,10 +69,7 @@ class ServiceConfig {
   }
 
   __findService(oService) {
-    return this.serviceMap.findIndex(
-      service =>
-        service.url === oService.url && service.method === oService.method && service.param === oService.param
-    );
+    return this.serviceMap.findIndex(service => service.url === oService.url && service.method === oService.method && service.param === oService.param);
   }
 
   addServiceURL(oService) {

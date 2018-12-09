@@ -1,6 +1,8 @@
 // const PouchDB = require("pouchdb"),
 
 import fs from 'fs';
+import os from 'os';
+import path from 'path';
 import fileLoader from './FileLoader';
 import dbLoader from './DBLoader';
 import constants from '../utils/constants';
@@ -23,7 +25,8 @@ const template = {
   SSLCert: '',
   rootPath: '',
   'proxy.host': undefined,
-  'proxy.port': undefined
+  'proxy.port': undefined,
+  project: []
 };
 
 class ServerConfig {
@@ -45,7 +48,6 @@ class ServerConfig {
       return obj;
     }, {});
     /* eslint-enable no-param-reassign */
-    debugger;
     __defaultConfig.keys = () => Object.keys(template);
     ServerConfig.getDefault = () => __defaultConfig;
     return __defaultConfig;
@@ -94,22 +96,24 @@ class ServerConfig {
   _check(key, val, cache) {
     const tmp = cache[key];
     cache[key] = val; // eslint-disable-line
+    debugger;
     return tmp !== val;
   }
 
-  updateCache(oConfig, cache = this.serverMap) {
-    return Object.keys(oConfig).reduce((key, tag) => {
+  updateCache(oConfig, flag = false, cache = this.serverMap) {
+    return Object.keys(oConfig).reduce((tag, key) => {
       if (typeof oConfig[key] === 'object') {
-        return this.updateCache(oConfig[key], cache[key]);
+        return this.updateCache(oConfig[key], tag, cache[key]);
       }
       return this._check(key, oConfig[key], cache) || tag;
-    }, false);
+    }, flag);
   }
 
   saveConfig(oConfig) {
     return new Promise((resolve, reject) => {
       if (this.updateCache(oConfig)) {
-        fs.writeFile(constants.SERVER_CONFIG, JSON.stringify(this.serverMap), err => {
+        debugger;
+        fs.writeFile(this.serverConfigPath, JSON.stringify(this.serverMap), err => {
           debugger;
           if (err) {
             reject(err);
@@ -131,7 +135,7 @@ class ServerConfig {
     const isDiff = aConfig.reduce((tag, config) => tag || this.check(config.key, config.val), false);
     return new Promise((resolve, reject) => {
       if (isDiff) {
-        fs.writeFile(constants.SERVER_CONFIG, JSON.stringify(this.serverMap), err => {
+        fs.writeFile(this.serverConfigPath, JSON.stringify(this.serverMap), err => {
           if (err) {
             reject(err);
           } else {
@@ -165,19 +169,19 @@ class ServerConfig {
   }
 
   loadConfigFile() {
-    try {
-      fs.statSync(constants.SERVER_CONFIG);
-      const config = fs.readFileSync(constants.SERVER_CONFIG, 'utf-8');
+    if (fs.existsSync(this.serverConfigPath)) {
+      const config = fs.readFileSync(this.serverConfigPath, 'utf-8');
       return config.length > 0 ? JSON.parse(config) : {};
-    } catch (e) {
-      try {
-        fs.statSync('./_config');
-      } catch (err) {
-        fs.mkdirSync('./_config');
-      }
-      fs.writeFileSync(constants.SERVER_CONFIG, '');
-      return {};
     }
+    if (!fs.existsSync(this.rootPath)) {
+      fs.mkdirSync(this.rootPath);
+    }
+
+    if (!fs.existsSync(path.join(this.rootPath, '_config'))) {
+      fs.mkdirSync(path.join(this.rootPath, '_config'));
+    }
+    fs.writeFileSync(this.serverConfigPath, '');
+    return {};
   }
 
   getServerLoader() {
@@ -189,9 +193,14 @@ class ServerConfig {
     // dbLoader.initDB(name);
   }
 
+  getServerConfigPath() {
+    return this.serverConfigPath;
+  }
+
   constructor() {
     this.isChanged = false;
-    debugger;
+    this.rootPath = path.join(os.homedir(), constants.ROOT);
+    this.serverConfigPath = path.join(this.rootPath, constants.SERVER_CONFIG);
     const defaultMap = ServerConfig.getDefault();
     this.serverMap = {};
     Object.assign(this.serverMap, defaultMap, this.loadConfigFile());
