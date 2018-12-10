@@ -96,7 +96,6 @@ class ServerConfig {
   _check(key, val, cache) {
     const tmp = cache[key];
     cache[key] = val; // eslint-disable-line
-    debugger;
     return tmp !== val;
   }
 
@@ -112,9 +111,7 @@ class ServerConfig {
   saveConfig(oConfig) {
     return new Promise((resolve, reject) => {
       if (this.updateCache(oConfig)) {
-        debugger;
         fs.writeFile(this.serverConfigPath, JSON.stringify(this.serverMap), err => {
-          debugger;
           if (err) {
             reject(err);
           } else {
