@@ -26,6 +26,16 @@ const getRoutes = config => {
         utils.sendFile(filePath, res);
       }
     }
+    // ,
+    // {
+    //   target: new RegExp(/^\/ui\/sfgrp\/js\/HP3ProfileComplete.*/), // home page3 web project
+    //   cb: (req, res) => {
+    //     const relativePath = '/au-homepage3/';
+    //     const __path = req.url.replace('_dev-snapshot', '').replace(/(.*)_.{32}(\.js)$/, '$1$2');
+    //     const filePath = path.join(ROOT, relativePath, __path);
+    //     utils.sendFile(filePath, res);
+    //   }
+    // }
   ];
 };
 
