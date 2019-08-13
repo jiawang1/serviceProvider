@@ -13,8 +13,7 @@ const wrapRoute = (obj, next) => (req, res) => {
     next(req, res);
   }
 };
-const composeRoute = (...items) =>
-  items.reduceRight((pre, cur) => wrapRoute(cur, pre), wrapRoute(items[items.length - 1]));
+const composeRoute = (...items) => items.reduceRight((pre, cur) => wrapRoute(cur, pre), wrapRoute(items[items.length - 1]));
 
 const constructRoute = aConfig => (req, res) => {
   composeRoute(...aConfig)(req, res);

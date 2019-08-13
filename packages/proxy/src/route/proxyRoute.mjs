@@ -61,7 +61,7 @@ const createProxyRoute = serviceConfig => {
   const requestRemoteServer = remoteWrapper(config);
   return (req, res) => {
     const handleResponseWithCache = (hostRes, request, response) =>
-      config.get('sync') === 'true'
+      config.get('sync') === true
         ? handleRemoteRes(hostRes, request, response, serviceConfig.generateCacheStream.bind(serviceConfig))
         : handleRemoteRes(hostRes, request, response);
 

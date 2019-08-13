@@ -91,8 +91,13 @@ const requestRemoteServer = config => req => {
    *  refer will be the same with host
    * */
   delete option.headers.referer;
+
+  /**
+   * this two line of code used to remove attributes in header, just for call to SF api server
   const { accept, host } = option.headers;
   option.headers = { accept, host };
+ */
+
   if (oAuth) {
     option.headers.Authorization = oAuth;
   }

@@ -56,7 +56,6 @@ const createServerRoute = (config, serviceConfig) => (req, res, urlPart) => {
       this.headers = pair.val;
     }
   }
-  debugger;
   const aMathed = req.url
     .match(urlPart)[1]
     .trim()

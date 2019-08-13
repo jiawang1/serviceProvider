@@ -18,7 +18,7 @@ const getRoutes = config => {
       }
     },
     {
-      target: new RegExp(/^\/ui\/homepage3\/.*\/framework|todo\/.*/), // home page3 web project
+      target: new RegExp(/^\/ui\/homepage3\/.*\/(framework|todo)\/.*/), // home page3 web project
       cb: (req, res) => {
         const relativePath = '/au-homepage3/au-homepage3-web/src/main/webapp';
         const __path = req.url.replace('_dev-snapshot', '').replace(/(.*)_.{32}(\.js)$/, '$1$2');

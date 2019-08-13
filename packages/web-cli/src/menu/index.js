@@ -13,12 +13,17 @@ class ConfigMenu extends Component {
     super(props);
   }
 
+  onClick = (...args)=>{
+    console.log(args);
+  }
+
   render() {
     return (
       <div className="menu-frame">
         <Menu
           defaultSelectedKeys={['server-config']}
           defaultOpenKeys={['sub1']}
+          onClick={this.onClick}
           mode="inline"
           theme="dark"
         >

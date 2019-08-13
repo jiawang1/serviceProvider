@@ -7,11 +7,14 @@ import utils from './utils/utils';
 import getServerConfig from './service/ServerConfig';
 import constructRoute from './route/route';
 import getHomeRoutes from './route/homeRoute';
+
 import getDWRRoutes from './route/dwrRoute';
 import getPreRoutes from './route/preRoute';
 import createServerRoute from './config/configurationService';
 import getProxyRoute from './route/proxyRoute';
 import createConfigRoute from './route/serverConfigRoute';
+import getStaticRoute from './route/staticRoute';
+import getTodoRoutes from './route/todoRoute';
 
 const config = getServerConfig();
 const serviceConfig = new ServiceConfig(config);
@@ -22,12 +25,6 @@ const serviceConfig = new ServiceConfig(config);
 function handleStatic(req, res) {
   const { url } = req;
   const _path = path.join('.', url);
-  utils.sendFile(_path, res);
-}
-
-function handleResource(req, res, urlPart) {
-  const matched = req.url.match(urlPart)[0];
-  const _path = path.normalize(config.get('rootPath') + matched);
   utils.sendFile(_path, res);
 }
 
@@ -43,9 +40,11 @@ const aRoutes = [
   },
   ...createConfigRoute({ config, serviceConfig }),
   ...getDWRRoutes(config),
-  { target: new RegExp(config.get('resourceRoute')), cb: handleResource },
+  ...getStaticRoute(config),
   { target: new RegExp('/__public/'), cb: handleStatic },
   ...getHomeRoutes(config),
+  ...getTodoRoutes(config),
+  // ...getSurjRoutes(config),
   ...getProxyRoute(serviceConfig)
 ];
 const route = constructRoute(aRoutes);

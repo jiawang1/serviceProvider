@@ -47,6 +47,10 @@ class ServerConfig extends React.Component {
     });
   }
 
+  componentWillUnmount(){
+    console.log('server config will unmount');
+  }
+
   onChangeCacheStrategy = e => {};
 
   onChangeWorkingMode = e => {};
@@ -208,6 +212,12 @@ class ServerConfig extends React.Component {
           <FormItem {...formItemLayout} label="Root File Path">
             {getFieldDecorator('rootPath', {
               initialValue: this.state.rootPath
+            })(<Input />)}
+          </FormItem>
+
+          <FormItem {...formItemLayout} label="static resource">
+            {getFieldDecorator('resourceRoute', {
+              initialValue: this.state.resourceRoute
             })(<Input />)}
           </FormItem>
 

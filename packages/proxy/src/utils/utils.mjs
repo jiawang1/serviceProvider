@@ -17,8 +17,12 @@ const wrapToPromise = (fn, context) => (...args) =>
 const bind = (fn, context) => (...args) => fn.apply(context, [].slice.call(...args));
 
 const sendFile = (filePath, res) => {
-  const ext = path.extname(filePath).toLowerCase();
+  const ext = path
+    .extname(filePath)
+    .slice(1)
+    .toLowerCase();
   const mime = constants.MIME[ext] || constants.MIME.text;
+  console.log(filePath);
   const fileRaw = fs.createReadStream(filePath);
 
   fileRaw
