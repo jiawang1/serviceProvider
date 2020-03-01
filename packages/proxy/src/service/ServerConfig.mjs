@@ -3,9 +3,9 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import fileLoader from './FileLoader';
-import dbLoader from './DBLoader';
-import constants from '../utils/constants';
+import fileLoader from './FileLoader.mjs';
+// import dbLoader from './DBLoader.mjs';
+import constants from '../utils/constants.mjs';
 
 const template = {
   port: 8079,
@@ -26,7 +26,8 @@ const template = {
   rootPath: '',
   'proxy.host': undefined,
   'proxy.port': undefined,
-  project: []
+  projects: [],
+  currentProject: ''
 };
 
 class ServerConfig {
@@ -182,7 +183,8 @@ class ServerConfig {
   }
 
   getServerLoader() {
-    return this.get('toDatabase') === 'true' ? dbLoader : fileLoader;
+    // return this.get('toDatabase') === 'true' ? dbLoader : fileLoader;
+    return fileLoader;
   }
 
   __initDB(name) {

@@ -1,5 +1,5 @@
 import path from 'path';
-import utils from '../utils/utils';
+import utils from '../utils/utils.mjs';
 
 /**
  * support SF home page

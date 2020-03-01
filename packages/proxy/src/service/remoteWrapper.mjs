@@ -1,6 +1,6 @@
 import http from 'http';
 import https from 'https';
-import utils from '../utils/utils';
+import utils from '../utils/utils.mjs';
 
 const reportError = (err, cb) => {
   console.error('error when connect to endpoint site via proxy');

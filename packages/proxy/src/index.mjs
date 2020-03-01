@@ -2,19 +2,19 @@ import http from 'http';
 import https from 'https';
 import fs from 'fs';
 import path from 'path';
-import ServiceConfig from './service/ServiceConfig';
-import utils from './utils/utils';
-import getServerConfig from './service/ServerConfig';
-import constructRoute from './route/route';
-import getHomeRoutes from './route/homeRoute';
+import ServiceConfig from './service/ServiceConfig.mjs';
+import utils from './utils/utils.mjs';
+import getServerConfig from './service/ServerConfig.mjs';
+import constructRoute from './route/route.mjs';
+import getHomeRoutes from './route/homeRoute.mjs';
 
-import getDWRRoutes from './route/dwrRoute';
-import getPreRoutes from './route/preRoute';
-import createServerRoute from './config/configurationService';
-import getProxyRoute from './route/proxyRoute';
-import createConfigRoute from './route/serverConfigRoute';
-import getStaticRoute from './route/staticRoute';
-import getTodoRoutes from './route/todoRoute';
+import getDWRRoutes from './route/dwrRoute.mjs';
+import getPreRoutes from './route/preRoute.mjs';
+import createServerRoute from './config/configurationService.mjs';
+import getProxyRoute from './route/proxyRoute.mjs';
+import createConfigRoute from './route/serverConfigRoute.mjs';
+import getStaticRoute from './route/staticRoute.mjs';
+import getTodoRoutes from './route/todoRoute.mjs';
 
 const config = getServerConfig();
 const serviceConfig = new ServiceConfig(config);
@@ -39,16 +39,16 @@ const aRoutes = [
     cb: createServerRoute(config, serviceConfig)
   },
   ...createConfigRoute({ config, serviceConfig }),
-  ...getDWRRoutes(config),
+  // ...getDWRRoutes(config),
   ...getStaticRoute(config),
   { target: new RegExp('/__public/'), cb: handleStatic },
-  ...getHomeRoutes(config),
-  ...getTodoRoutes(config),
+  // ...getHomeRoutes(config),
+  // ...getTodoRoutes(config),
   // ...getSurjRoutes(config),
   ...getProxyRoute(serviceConfig)
 ];
-const route = constructRoute(aRoutes);
 
+const route = constructRoute(aRoutes);
 const SSLKeyPath = config.get('SSLKey').length === 0 ? null : path.normalize(config.get('SSLKey'));
 const SSLCertPath = config.get('SSLCert').length === 0 ? null : path.normalize(config.get('SSLCert'));
 const protocol = config.isSSL() && fs.existsSync(SSLKeyPath) && fs.existsSync(SSLCertPath) ? 'https' : 'http';

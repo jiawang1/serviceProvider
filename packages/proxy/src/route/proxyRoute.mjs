@@ -1,7 +1,7 @@
-import constants from '../utils/constants';
-import remoteWrapper from '../service/remoteWrapper';
-import Cache from '../service/ProxyCache';
-import getServerConfig from '../service/ServerConfig';
+import constants from '../utils/constants.mjs';
+import remoteWrapper from '../service/remoteWrapper.mjs';
+import Cache from '../service/ProxyCache.mjs';
+import getServerConfig from '../service/ServerConfig.mjs';
 
 const oCache = new Cache(getServerConfig());
 
@@ -60,10 +60,12 @@ const createProxyRoute = serviceConfig => {
   const config = getServerConfig();
   const requestRemoteServer = remoteWrapper(config);
   return (req, res) => {
-    const handleResponseWithCache = (hostRes, request, response) =>
-      config.get('sync') === true
+    const handleResponseWithCache = (hostRes, request, response) => {
+      const syncStatus = config.get('sync');
+      return syncStatus === 'true'
         ? handleRemoteRes(hostRes, request, response, serviceConfig.generateCacheStream.bind(serviceConfig))
         : handleRemoteRes(hostRes, request, response);
+    };
 
     if (Number(config.get('workingMode')) === constants.workingMode.dataProvider) {
       // cache only
@@ -80,7 +82,8 @@ const createProxyRoute = serviceConfig => {
           .then(() => {
             console.log(`find in cache ${req.url}`);
           })
-          .catch(() => {
+          .catch(e => {
+            console.log(e);
             requestRemoteServer(req, res)
               .then(hostRes => handleResponseWithCache(hostRes, req, res))
               .catch(error => {

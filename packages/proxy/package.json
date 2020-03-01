@@ -6,11 +6,12 @@
   "config": {
     "port": 8079
   },
+  "type": "module",
   "scripts": {
     "start": "node --experimental-modules src/index.mjs",
     "debug": "node --inspect-brk --experimental-modules src/index.mjs",
     "lint": "eslint ./src/**/*.mjs",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node --experimental-modules  --inspect-brk  src/index.mjs",
     "build":"tsc"
 
   },
