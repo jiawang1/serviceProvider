@@ -1,11 +1,14 @@
 import { Transform } from 'stream';
+import utils from './utils.mjs';
 
 class CacheBranchStream extends Transform {
-  constructor(promiseCB) {
+  constructor(promiseCB, shouldUnzip = false, encoding) {
     super();
     this.cb = promiseCB;
     this.chunks = [];
     this.size = 0;
+    this.shouldUnzip = shouldUnzip;
+    this.encoding = encoding;
   }
 
   _transform(chunk, encoding, cb) {
@@ -22,8 +25,18 @@ class CacheBranchStream extends Transform {
       pos += chunk.length;
     });
 
-    this.cb(data.toString())
-      .then(() => done())
+    let promiseChain = Promise.resolve(data);
+
+    if (this.shouldUnzip) {
+      const unzipMethod = utils.getDeCompressMethod(this.encoding);
+      promiseChain = unzipMethod(data);
+    }
+
+    promiseChain
+      .then(unzipedData => this.cb(unzipedData.toString()))
+      .then(() => {
+        done();
+      })
       .catch(err => {
         console.error(err);
         done();

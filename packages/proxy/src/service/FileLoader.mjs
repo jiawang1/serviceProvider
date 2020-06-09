@@ -1,5 +1,5 @@
 import fs from 'fs';
-import constants from '../utils/constants';
+import constants from '../utils/constants.mjs';
 
 // const loadServerConfig = () => {
 //   try {
@@ -24,7 +24,7 @@ const loadServiceMap = () => {
   } catch (e) {
     console.error(`failed to read file ${constants.SERVICE_CONFIG}, will create new empty file`);
     console.error(e.message || e);
-    console.log(__dirname);
+
     fs.writeFile(constants.SERVICE_CONFIG, '', () => {});
     return [];
   }

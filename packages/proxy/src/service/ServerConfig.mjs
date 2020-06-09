@@ -3,9 +3,9 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import fileLoader from './FileLoader';
-import dbLoader from './DBLoader';
-import constants from '../utils/constants';
+import fileLoader from './FileLoader.mjs';
+// import dbLoader from './DBLoader.mjs';
+import constants from '../utils/constants.mjs';
 
 const template = {
   port: 8079,
@@ -26,7 +26,8 @@ const template = {
   rootPath: '',
   'proxy.host': undefined,
   'proxy.port': undefined,
-  project: []
+  projects: [],
+  currentProject: ''
 };
 
 class ServerConfig {
@@ -96,7 +97,6 @@ class ServerConfig {
   _check(key, val, cache) {
     const tmp = cache[key];
     cache[key] = val; // eslint-disable-line
-    debugger;
     return tmp !== val;
   }
 
@@ -112,9 +112,7 @@ class ServerConfig {
   saveConfig(oConfig) {
     return new Promise((resolve, reject) => {
       if (this.updateCache(oConfig)) {
-        debugger;
         fs.writeFile(this.serverConfigPath, JSON.stringify(this.serverMap), err => {
-          debugger;
           if (err) {
             reject(err);
           } else {
@@ -185,7 +183,8 @@ class ServerConfig {
   }
 
   getServerLoader() {
-    return this.get('toDatabase') === 'true' ? dbLoader : fileLoader;
+    // return this.get('toDatabase') === 'true' ? dbLoader : fileLoader;
+    return fileLoader;
   }
 
   __initDB(name) {

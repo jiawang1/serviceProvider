@@ -1,12 +1,14 @@
 import path from 'path';
 import fs from 'fs';
-import constants from '../utils/constants';
-import CacheStream from '../utils/CacheBranchStream';
+import constants from '../utils/constants.mjs';
+import CacheStream from '../utils/CacheBranchStream.mjs';
+import utils from '../utils/utils.mjs';
 
 class ServiceConfig {
   constructor(config) {
     this.loader = config.getServerLoader();
     this.serviceMap = config.getServerLoader().loadServiceMap();
+    this.serviceRoot = path.join(process.cwd(), './_config');
   }
 
   getServiceList() {
@@ -25,13 +27,20 @@ class ServiceConfig {
     });
   }
 
+  __shouldHandleZip(headers) {
+    return Object.keys(headers).some(k => k.trim().includes('content-encoding') && headers[k].search(/gzip|deflate/) >= 0);
+  }
+
   generateCacheStream(req, hostRes) {
     const oService = this.__generateConfigFromRequest(req, hostRes);
     const cacheFromStream = data => {
       oService.data = data;
       return Promise.all([this.addServiceURL(oService), this.addService(oService)]);
     };
-    return new CacheStream(cacheFromStream);
+
+    const shouldHandleZip = this.__shouldHandleZip(hostRes.headers);
+
+    return shouldHandleZip ? new CacheStream(cacheFromStream, shouldHandleZip, hostRes.headers['content-encoding']) : new CacheStream(cacheFromStream);
   }
 
   __generateConfigFromRequest(req, res) {
@@ -59,7 +68,7 @@ class ServiceConfig {
 
     oService.path = this.generatePath({
       method: oService.method,
-      path: req.url.replace(/^(.*)\?.*/, '$1').replace(/\//g, '_')
+      fileName: req.url.replace(/^(.*)\?.*/, '$1').replace(/\//g, '_')
     });
     return oService;
   }
@@ -93,10 +102,7 @@ class ServiceConfig {
   }
 
   generatePath(oService) {
-    if (oService.path && oService.path.indexOf('_config') >= 0) {
-      return oService.path;
-    }
-    return `${path.join('./_config', oService.method + oService.path)}.json`;
+    return oService.path || `${path.join(this.serviceRoot, oService.method, oService.fileName)}.json`;
   }
 
   __generateKey(oService) {
@@ -112,28 +118,25 @@ class ServiceConfig {
       body: oService.data
     };
     return new Promise((resolve, reject) => {
-      fs.readFile(_path, 'utf-8', (err, data) => {
+      fs.readFile(_path, 'utf8', (err, data) => {
         if (err) {
           const _oCache = {};
           _oCache[_key] = __cacheData;
-          fs.writeFile(_path, JSON.stringify(_oCache), 'utf-8', error => {
-            if (error) {
+
+          utils
+            .safeWriteFile(_path, JSON.stringify(_oCache), 'utf8')
+            .then(() => resolve(oService))
+            .catch(error => {
               reject(error);
-            } else {
-              resolve(oService);
-            }
-          });
+            });
         } else {
           try {
             const cacheData = JSON.parse(data);
             cacheData[_key] = __cacheData;
-            fs.writeFile(_path, JSON.stringify(cacheData), 'utf-8', error => {
-              if (error) {
-                reject(error);
-              } else {
-                resolve(oService);
-              }
-            });
+            utils
+              .safeWriteFile(_path, JSON.stringify(cacheData), 'utf8')
+              .then(() => resolve(oService))
+              .catch(error => reject(error));
           } catch (error) {
             reject(error);
           }
@@ -146,14 +149,14 @@ class ServiceConfig {
     const _path = this.generatePath(oService);
     return new Promise((resolve, reject) => {
       if (oService.param && oService.param.length > 0) {
-        fs.readFile(_path, 'utf-8', (err, data) => {
+        fs.readFile(_path, 'utf8', (err, data) => {
           if (err) {
             console.error(err);
             resolve('no-data');
           } else {
             const oData = JSON.parse(data);
             delete oData[oService.param];
-            fs.writeFile(_path, JSON.stringify(oData), 'utf-8', error => {
+            fs.writeFile(_path, JSON.stringify(oData), 'utf8', error => {
               if (error) {
                 console.error(error);
                 reject(error);
@@ -220,8 +223,9 @@ class ServiceConfig {
     // 		let oService = this.__constructServiceObject(req);
     const oService = this.__generateConfigFromRequest(req);
     return this.loadServiceData(oService).then(data => {
+      let headers = {};
       if (data.headers) {
-        const headers = typeof data.headers === 'string' ? JSON.parse(data.headers) : data.headers;
+        headers = typeof data.headers === 'string' ? JSON.parse(data.headers) : data.headers;
         res.writeHead(200, headers);
       } else {
         res.writeHead(200, {
@@ -229,7 +233,19 @@ class ServiceConfig {
         });
       }
 
-      res.end(JSON.parse(JSON.stringify(data.body || data)));
+      if (this.__shouldHandleZip(headers)) {
+        const encoding = headers['content-encoding'];
+        const raw = Buffer.from(data.body || data);
+        const promiseZip = utils.getCompressMethod(encoding);
+        if (promiseZip) {
+          return promiseZip(raw).then(gzipedData => {
+            res.end(gzipedData);
+            return gzipedData;
+          });
+        }
+        console.error(`failed to match zip method for ${encoding}`);
+      }
+      res.end(data.body || data);
       return data;
     });
   }

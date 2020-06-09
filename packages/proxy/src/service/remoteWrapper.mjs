@@ -1,6 +1,6 @@
 import http from 'http';
 import https from 'https';
-import utils from '../utils/utils';
+import utils from '../utils/utils.mjs';
 
 const reportError = (err, cb) => {
   console.error('error when connect to endpoint site via proxy');
@@ -91,6 +91,12 @@ const requestRemoteServer = config => req => {
    *  refer will be the same with host
    * */
   delete option.headers.referer;
+
+  /**
+   * this two line of code used to remove attributes in header, just for call to SF api server
+  const { accept, host } = option.headers;
+  option.headers = { accept, host };
+ */
 
   if (oAuth) {
     option.headers.Authorization = oAuth;

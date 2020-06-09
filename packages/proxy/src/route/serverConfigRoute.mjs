@@ -1,6 +1,6 @@
-const fs = require('fs');
-const path = require('path');
-const constants = require('../utils/constants');
+import fs from 'fs';
+import path from 'path';
+import constants from '../utils/constants.mjs';
 
 const basePath = 'service-provider-web/_build/';
 const servicePrefix = /__service__\/(.*)/;
@@ -82,4 +82,4 @@ const createConfigRoute = oController => [
   }
 ];
 
-module.exports = createConfigRoute;
+export default createConfigRoute;

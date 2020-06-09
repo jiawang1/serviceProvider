@@ -1,8 +1,8 @@
 import path from 'path';
-import View from './View';
-import getServerConfig from '../service/ServerConfig';
+import View from './View.mjs';
+import getServerConfig from '../service/ServerConfig.mjs';
 
-import constants from '../utils/constants';
+import constants from '../utils/constants.mjs';
 
 const oView = new View();
 
@@ -56,7 +56,6 @@ const createServerRoute = (config, serviceConfig) => (req, res, urlPart) => {
       this.headers = pair.val;
     }
   }
-  debugger;
   const aMathed = req.url
     .match(urlPart)[1]
     .trim()
@@ -70,7 +69,7 @@ const createServerRoute = (config, serviceConfig) => (req, res, urlPart) => {
     // handle action from configuration page
     const oService = {};
     if (req.bodyData && typeof req.bodyData !== 'string') {
-      req.bodyData = req.bodyData.toString('utf-8');
+      req.bodyData = req.bodyData.toString('utf8');
     }
 
     switch (matched) {
