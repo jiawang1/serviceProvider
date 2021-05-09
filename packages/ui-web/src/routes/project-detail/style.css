@@ -1,0 +1,23 @@
+.app-tool {
+  height: 150px;
+}
+
+.px-project-detail {
+  width: 100%;
+}
+
+.px-element-box {
+  margin: 30px;
+}
+
+.px-multi-card {
+  margin-bottom: 40px;
+}
+
+.px-project-detail .px-element-box {
+  text-align: initial;
+}
+
+.px-full-select {
+  width: 100%;
+}

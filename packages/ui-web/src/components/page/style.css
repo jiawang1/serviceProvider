@@ -1,0 +1,18 @@
+.app-tool {
+  height: 300px;
+  background-color: rgb(17, 205, 239);
+}
+
+.app-content {
+  flex-grow: 1;
+  margin-top: -120px;
+}
+
+.px-list-page {
+  display: flex;
+  flex-wrap: wrap;
+  flex-flow: row wrap;
+  width: 80%;
+  height: 100%;
+  margin: 0 auto;
+}

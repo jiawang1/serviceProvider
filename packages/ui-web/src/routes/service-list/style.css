@@ -1,0 +1,26 @@
+.px-service-list {
+  width: 100%;
+}
+
+.px-service-item {
+  margin-left: 32px;
+}
+
+.px-element-box {
+  margin: 30px;
+}
+
+button.px-dialog-tab.px-dialog_active {
+  color: #fff;
+  border-radius: 4px;
+  background-color: #ff9800;
+  box-shadow: 0px 5px 5px -3px rgb(0 0 0 / 20%), 0px 8px 10px 1px rgb(0 0 0 / 14%), 0px 3px 14px 2px rgb(0 0 0 / 12%);
+}
+
+button.px-fix-create {
+  position: fixed;
+  right: 30px;
+  bottom: 40px;
+  /* background-color: rgb(17, 205, 239);
+  color: white; */
+}

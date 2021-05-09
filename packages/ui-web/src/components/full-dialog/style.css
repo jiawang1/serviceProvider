@@ -1,0 +1,20 @@
+.px-service-dialog .MuiDialog-container > .MuiPaper-root {
+  background-color: #eee;
+}
+
+.px-service-dialog .MuiTabs-scroller {
+  padding: 4px;
+}
+
+header.px-app-bar {
+  background-color: rgb(17, 205, 239);
+}
+
+.px-app-bar > div {
+  position: relative;
+}
+
+button.px-service-save {
+  position: absolute;
+  right: 48px;
+}
