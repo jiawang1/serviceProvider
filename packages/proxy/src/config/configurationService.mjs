@@ -43,7 +43,7 @@ const createServerRoute = (config, serviceConfig) => (req, res, urlPart) => {
   function mapParam(pair) {
     if (pair.key === 'serviceUrl') {
       this.url = pair.val;
-      this.path = pair.val.replace(/\//g, '_');
+      // this.path = pair.val.replace(/\//g, '_');
     } else if (pair.key === 'serviceData') {
       if (pair.val && pair.val.length > 0) {
         this.data = pair.val;
@@ -139,6 +139,10 @@ const createServerRoute = (config, serviceConfig) => (req, res, urlPart) => {
         break;
       case '/load_service':
         extractParam(aMathed[1]).map(mapParam.bind(oService));
+        oService.path = serviceConfig.generatePath({
+          method: oService.method,
+          fileName: oService.url.replace(/^(.*)\?.*/, '$1').replace(/\//g, '_')
+        });
         serviceConfig
           .loadServiceData(oService)
           .then(data => {

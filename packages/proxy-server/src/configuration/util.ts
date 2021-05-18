@@ -21,3 +21,10 @@ export const isJSON = target => {
 };
 
 export const separatter = Symbol('@@sep');
+
+export const CACHE_STRATEGY = {
+  'No Cache': 0,
+  'Only Cache': 1,
+  'Remote First': 2,
+  'Cache First': 3,
+} as const;

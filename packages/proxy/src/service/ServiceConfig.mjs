@@ -110,6 +110,7 @@ class ServiceConfig {
   }
 
   addService(oService) {
+    debugger;
     const _path = this.generatePath(oService);
     // support multi-param only for GET method
     const _key = this.__generateKey(oService);
@@ -197,6 +198,7 @@ class ServiceConfig {
   }
 
   loadServiceData(oService) {
+    debugger;
     return this.loader.loadServiceData(this.generatePath(oService), this.__generateKey(oService));
   }
 

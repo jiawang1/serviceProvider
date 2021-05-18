@@ -31,6 +31,7 @@ import SettingsIcon from '@material-ui/icons/Settings';
 import PostAddIcon from '@material-ui/icons/PostAdd';
 import * as monaco from 'monaco-editor';
 import { FullScreenDialog } from '../../components/full-dialog/FullScreenDialog';
+import { Protocol } from '../../common/type';
 import { TabPanel } from '../../components/tab-panel/TabPanel';
 
 import { JSONRenderer } from './JSONRenderer';
@@ -82,27 +83,21 @@ const useJSONRender = (root, value) => {
 
 export const ServiceDialog = ({ showDialog, handleClose, serviceInfo }) => {
   const [value, setValue] = useState(0);
-  const requestContainer = useRef();
+  const responseSchemaContainer = useRef();
   const preContainer = useRef();
-  const [, reRender] = useState(0);
-  // const [] = useJSONRender(
-  //   requestContainer.current,
-  //   `{
-  //   "test":1,
-  //   "value":"a"
-  // }`
-  // );
+  const [method, setMethod] = useState<string>('GET');
+  const [serviceURL, setServiceURL] = useState<string>();
 
   useEffect(() => {
-    preContainer.current = requestContainer.current;
-  }, [requestContainer.current]);
+    preContainer.current = responseSchemaContainer.current;
+  }, [responseSchemaContainer.current]);
 
   const renderIDE = ele => {
-    requestContainer.current = ele;
-    if (requestContainer.current && requestContainer.current !== preContainer.current) {
+    responseSchemaContainer.current = ele;
+    if (responseSchemaContainer.current && responseSchemaContainer.current !== preContainer.current) {
       console.log('rendered ***************************');
-      console.log(requestContainer.current.children.length);
-      monaco.editor.create(requestContainer.current, {
+      console.log(responseSchemaContainer.current.children.length);
+      monaco.editor.create(responseSchemaContainer.current, {
         value: `{
           "test":1,
           "value":"a"
@@ -113,7 +108,7 @@ export const ServiceDialog = ({ showDialog, handleClose, serviceInfo }) => {
     }
   };
 
-  const handleSelection = (event: React.ChangeEvent<{}>, newValue: number) => {
+  const handleSelection = (_: React.ChangeEvent<{}>, newValue: number) => {
     setValue(newValue);
   };
   return (
@@ -147,7 +142,7 @@ export const ServiceDialog = ({ showDialog, handleClose, serviceInfo }) => {
             <div className="px-element-box">
               <FormControl component="fieldset">
                 <FormLabel component="legend">HTTP Method</FormLabel>
-                <RadioGroup row aria-label="position" name="position" defaultValue="GET">
+                <RadioGroup row aria-label="position" name="position" defaultValue="GET" value={method}>
                   <FormControlLabel
                     value="GET"
                     control={<Radio color="primary" />}
@@ -183,14 +178,14 @@ export const ServiceDialog = ({ showDialog, handleClose, serviceInfo }) => {
             </div>
 
             <div className="px-element-box">
-              <TextField label="Service URL" helperText="Incorrect entry." variant="outlined" fullWidth />
+              <TextField label="Service URL" required variant="outlined" fullWidth value={serviceURL} />
             </div>
 
             <div className="px-element-box">
               <TextField label="Request Body Schema" variant="outlined" fullWidth />
             </div>
 
-            {/* <JSONRenderer value={tt} root={requestContainer.current} getValue={getCode => console.log(getCode())}> */}
+            {/* <JSONRenderer value={tt} root={responseSchemaContainer.current} getValue={getCode => console.log(getCode())}> */}
             <div className="px-element-box" ref={renderIDE} style={{ height: 200 }}></div>
             {/* </JSONRenderer> */}
 

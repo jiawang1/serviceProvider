@@ -23,6 +23,14 @@ export const ProjectList: React.FC = () => {
   }, []);
 
   const handleCreateProject = () => setShowCreateProject(true);
+
+  const handleCreateCallback = data => {
+    setShowCreateProject(false);
+    if (data) {
+      setProjectList(data);
+    }
+  };
+
   return (
     <Page
       actions={[
@@ -32,14 +40,14 @@ export const ProjectList: React.FC = () => {
       ]}
     >
       <>
-        <ProjectPopup open={showCreateProject} onClose={() => setShowCreateProject(false)} />
+        <ProjectPopup open={showCreateProject} onClose={handleCreateCallback} />
         {projectList.map(project => {
           return (
             <Card
               key={project.projectId}
               className="px-card"
               onClick={() => {
-                history.push('/project-detail');
+                history.push(`/project-detail?id=${encodeURIComponent(project.projectId)}`);
               }}
             >
               <CardHeader title={project.projectName} />

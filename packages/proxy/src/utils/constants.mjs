@@ -93,6 +93,7 @@ const constants = {
     cacheFirst: 0,
     remoteFirst: 1
   },
+
   workingMode: {
     proxyCache: 0, // worked as http proxy, support redirect to endpoint server, cache all kinds of response
     dataProvider: 1, // worked as data provider service, do not access other endpoint server, ONLY SUPPORT JSON data
