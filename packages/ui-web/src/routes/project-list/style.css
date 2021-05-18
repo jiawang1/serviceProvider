@@ -1,0 +1,19 @@
+.px-card {
+  flex-basis: 28%;
+  margin: 16px 2.6%;
+  height: 300px;
+}
+
+button.px-button-create {
+  color: #5e72e4;
+  background-color: #ffffff;
+  font-weight: bold;
+}
+
+button.px-button-create:hover {
+  background-color: #ffffff;
+}
+
+.MuiPaper-root.MuiDialog-paper {
+  min-width: 600px;
+}

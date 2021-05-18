@@ -5,6 +5,12 @@
     "hoist": "npm install lerna && lerna bootstrap --hoist"
   },
   "devDependencies": {
-    "lerna": "^3.16.4"
+    "lerna": "^3.22.1"
+  },
+  "dependencies": {
+    "eslint-config-airbnb-typescript": "^12.3.1",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-prettier": "^3.4.0",
+    "prettier": "^2.2.1"
   }
 }

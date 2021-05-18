@@ -12,14 +12,12 @@
     "debug": "node --inspect-brk --experimental-modules src/index.mjs",
     "lint": "eslint ./src/**/*.mjs",
     "test": "node --experimental-modules  --inspect-brk  src/index.mjs",
-    "build":"tsc"
-
+    "build": "tsc"
   },
   "dependencies": {
     "ejs": "^2.4.2",
     "react": "^16.5.1",
     "react-dom": "^16.5.1",
-    "service-provider-web": "^0.1.0",
     "whatwg-fetch": "^3.0.0"
   },
   "keywords": [
